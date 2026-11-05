@@ -1,0 +1,14 @@
+# build output
+*.o
+*.obj
+*.exe
+*.map
+*.tds
+src/ularn
+
+# files the game writes at run time
+ularn.ini
+ularn.opt
+ularn.pid
+ularn.ckp
+*.sav

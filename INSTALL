@@ -1,0 +1,135 @@
+Building and installing Ularn 1.6.3a
+====================================
+
+Ularn 1.6 has no configure script (see the original notes below). Pick a
+front end, check src/config.h, and run make from the top-level directory.
+
+1. Edit src/config.h:
+   a) Uncomment exactly one of UNIX_TTY, UNIX_X11, WINDOWS, W32_TTY or
+      AMIGA_WIN. The distribution default is UNIX_TTY.
+   b) Set LIBDIR to the directory the data files will be installed in.
+      It must match LIB_PATH in the makefile you use (the TTY makefile
+      ships with LIB_PATH=/usr/games/lib, config.h with /usr/lib/ularn).
+
+2. Build from the top-level directory:
+
+     make tty        curses version   (src/makefile.tty, needs curses/ncurses)
+     make x11        X11 version      (src/makefile.x11, needs libX11, libXpm)
+
+   On Linux you will usually want ncurses:  make tty TTYLIB=-lncurses
+
+3. Install (as a user that can write INSTALL_PATH and LIB_PATH):
+
+     make install-tty    or    make install-x11
+
+   This copies the binary and the files in data/ into place.
+
+4. "make clean" removes object files and the binary.
+
+Other platforms (run from inside src/):
+
+     Win32 graphical, Borland C++ 5.5   make -f makefile.bcc
+     Win32 TTY, Borland C++ 5.5         make -f makefile.bcctty  (pdcurses)
+     Win32 graphical, MinGW             make -f Makefile.mingw
+     Win32 graphical, Dev-C++ 4.9.8     ularn.dev / Makefile.win
+     Win32 TTY, MinGW                   make -f makefile.mgwtty
+     Amiga (AGA), SAS/C 6.51            makefile.ami             (see README.amiga)
+
+Note from the original author: do not build the curses version with gcc's
+-fpack-struct; ncurses misbehaves when structures are packed.
+
+
+---- original install_tty.txt
+
+Compiling/Installing TTY ULarn
+------------------------------
+
+ULarn should compile on any Unix like O/S (Linux, NetBSD, solaris etc).
+The code has only been tested on gcc as it is the only compiler I use
+on unix based systems. It may or may not work on other compilers.
+
+I have tested it on the following systems:
+
+Pentium4 running Red Hat linux 7.1
+Amiga 4000/040 running NetBSD 1.5.2
+Sun UltraSparc running Solaris 2.5.2
+
+There is no auto configure script provided. I usually find them more 
+trouble than they are worth. For example, the configure script for 
+ularn 1.5pl4 (the old TTY version) made a right balls up on the
+UltraSparc Solaris system, and I ended up having to manually configure
+everything anyway.
+
+Some unix systems may need dos2unix (or equivalent command to strip ^M)
+to be run on the source files and the makefile before compiling. 
+The Sun Ultrasparc did, linux didn't.
+
+NOTE: Source installation is the only form I support for unix systems.
+      I do not release ULarn executables for the X11 version as there
+      are way too many variants.
+
+To compile and install ULarn:
+
+1. Edit makefile.tty to set system specific include and library paths.
+   This may not be necessary as the default include path is the most
+   common location for the necessary include files.
+   Change the INSTALL_PATH and LIB_PATH in to specify the desired install 
+   location.
+   Set LIB to the curses library you are using (probably -lncurses for linux
+   or -lcurses for other unix variants).
+
+2. Edit config.h
+   a) Set LIBDIR to the install location of the lib directory
+   b) Make sure that only the appropriate O/S define is uncommented.
+      (UNIX_TTY for the TTY version).
+
+4. Compile using make -f makefile.tty
+
+5. install using make -f makefile.tty install
+
+
+---- original install_x11.txt
+
+Compiling/Installing X11 ULarn
+------------------------------
+
+ULarn should compile on any Unix like O/S (Linux, NetBSD, solaris etc).
+The code has only been tested on gcc as it is the only compiler I use
+on unix based systems. It may or may not work on other compilers.
+
+I have tested it on the following systems:
+
+Pentium4 running Red Hat linux 7.1
+Amiga 4000/040 running NetBSD 1.5.2
+Sun UltraSparc running Solaris 2.5.2
+
+There is no auto configure script provided. I usually find them more 
+trouble than they are worth. For example, the configure script for 
+ularn 1.5pl4 (the old TTY version) made a right balls up on the
+UltraSparc Solaris system, and I ended up having to manually configure
+everything anyway.
+
+Some unix systems may need dos2unix (or equivalent command to strip ^M)
+to be run on the source files and the makefile before compiling. 
+The Sun Ultrasparc did, linux didn't.
+
+NOTE: Source installation is the only form I support for unix systems.
+      I do not release ULarn executables for the X11 version as there
+      are way too many variants.
+
+To compile and install ULarn:
+
+1. Edit makefile.x11 to set system specific include and library paths.
+   This may not be necessary as the default include path is the most
+   common location for the necessary include files.
+   Change the INSTALL_PATH and LIB_PATH in to specify the desired install 
+   location.
+
+2. Edit config.h
+   a) Set LIBDIR to the install location of the lib directory
+   b) Make sure that only the appropriate O/S define is uncommented.
+      (UNIX_X11 for the X11 version).
+
+4. Compile using make -f makefile.x11
+
+5. install using make -f makefile.x11 install
