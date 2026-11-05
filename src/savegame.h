@@ -22,6 +22,8 @@
 #ifndef __SAVEGAME_H
 #define __SAVEGAME_H
 
+#include "MemoryFile.h"
+
 /* =============================================================================
  * FUNCTION: savegame
  *
@@ -37,7 +39,7 @@
  *    0  if successfully written
  *    -1 if an error occurred
  */
-int savegame(char *fname);
+MemoryFile *savegame();
 
 /* =============================================================================
  * FUNCTION: restoregame
@@ -53,6 +55,6 @@ int savegame(char *fname);
  *
  *   None.
  */
-void restoregame(char *fname);
+void restoregame(char *data);
 
 #endif

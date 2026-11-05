@@ -72,27 +72,14 @@ unsigned int sum(unsigned char *data, int n)
 /* =============================================================================
  * FUNCTION: bwrite
  */
-void bwrite(FILE *fp, char *buf, long num)
+void bwrite(MemoryFile *fp, char *buf, long num)
 {
-  int nwrote;
   static int ncalls = 0;
 
   ncalls++;
-  nwrote = fwrite(buf, 1, num, fp);
+  MemoryFile_write(fp, (unsigned char *)buf, num);
 
-  w += nwrote;
-
-  if (nwrote != num)
-  {
-    Printf("Error writing to save file\n");
-    Printf("wrote %d, wanted %d\n", nwrote, num);
-    //    Printf("errno = %d\t[%s]\n", errno, sys_errlist[errno]);
-    Printf("    Wrote %d bytes so far\n", w);
-    Printf("        Call: %d\n", ncalls);
-
-    nap(4000);
-    died(DIED_POST_MORTEM_DEATH, 0);
-  }
+  w += num;
 
   FileSum += sum((unsigned char *)buf, num);
 }
@@ -100,27 +87,14 @@ void bwrite(FILE *fp, char *buf, long num)
 /* =============================================================================
  * FUNCTION: bread
  */
-void bread(FILE *fp, char *buf, long num)
+void bread(MemoryFile *fp, char *buf, long num)
 {
-  int nread;
   static int ncalls = 0;
 
   ncalls++;
-  nread = fread(buf, 1, num, fp);
+  MemoryFile_read(fp, (unsigned char *)buf, num);
 
-  r += nread;
-
-  if (nread != num)
-  {
-    Printf("Error reading from save file\n");
-    Printf("  Got %d, wanted %d bytes\n", nread, num);
-    //    Printf("errno = %d\t[%s]\n",errno,sys_errlist[errno]);
-    Printf("    Read %d bytes so far\n", w);
-    Printf("        Call: %d\n", ncalls);
-
-    nap(4000);
-    died(DIED_POST_MORTEM_DEATH, 0);
-  }
+  r += num;
 
   FileSum += sum((unsigned char *)buf, num);
 }

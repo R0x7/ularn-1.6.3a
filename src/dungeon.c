@@ -1108,9 +1108,12 @@ void free_cells(void)
 
   for (i = 0; i < NLEVELS; i++)
   {
+    level_sums[i] = 0;
+    beenhere[i] = 0;
     if (saved_levels[i] != (Saved_Level * ) NULL)
     {
       free(saved_levels[i]);
+      saved_levels[i] = NULL;
     }
   }
 }
@@ -1281,8 +1284,8 @@ void getlevel(void)
     if ((i = sum((unsigned char *)storage,sizeof(Saved_Level)))
        != level_sums[level])
     {
-      Printf("\nOH NO!!!! INTERNAL MEMORY CORRUPTION!!!!\n");
-      Printf("(sum %u of level %d does not match saved sum %u)\n",
+      Printf("OH NO!!!! INTERNAL MEMORY CORRUPTION!!!!");
+      Printf("(sum %u of level %d does not match saved sum %u)",
               i, level, level_sums[level]);
       UlarnBeep();
       nap(5000);
@@ -1723,7 +1726,7 @@ int newobject(int lev, int *i)
 /* =============================================================================
  * FUNCTION: write_levels
  */
-int write_levels(FILE *fp)
+int write_levels(MemoryFile *fp)
 {
   int i;
   Saved_Level *storage;
@@ -1761,7 +1764,7 @@ int write_levels(FILE *fp)
 /* =============================================================================
  * FUNCTION: read_levels
  */
-int read_levels(FILE *fp)
+int read_levels(MemoryFile *fp)
 {
   int i;
   Saved_Level *storage;

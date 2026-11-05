@@ -39,6 +39,7 @@
 #include "potion.h"
 #include "scores.h"
 #include "itm.h"
+#include "ularn_game.h"
 
 /* =============================================================================
  * Local functions
@@ -60,7 +61,7 @@
  */
 static void ohear(void)
 {
-  Print("\nYou have been heard!");
+  Print("You have been heard!");
   if (c[ALTPRO]==0)
     c[MOREDEFENSES] += ALTAR_PRO_BOOST;
   c[ALTPRO] += 800; /* protection field */
@@ -128,7 +129,6 @@ static void fntchange(int how)
 {
   long j;
 
-  Printc('\n');
   switch (rnd(9))
   {
     case 1:
@@ -215,7 +215,7 @@ static void fntchange(int how)
  */
 static void obottomless(void)
 {
-  Print("\nYou fell into a pit leading straight to HELL!");
+  Print("You fell into a pit leading straight to HELL!");
   UlarnBeep();
 
   nap(3000);
@@ -250,14 +250,14 @@ void oopendoor(int x, int y)
 
       case 7:
       case 8:
-        Print("\nYou are jolted by an electric shock!");
+        Print("You are jolted by an electric shock!");
 
         losehp(DIED_ELECTRIC_SHOCK, rnd(20));
         UpdateStatus();
         break;
 
       case 9:
-        Print("\nYou suddenly feel weaker!");
+        Print("You suddenly feel weaker!");
         if (c[STRENGTH]>3) c[STRENGTH]--;
         UpdateStatus();
         break;
@@ -279,125 +279,34 @@ void oopendoor(int x, int y)
 /* =============================================================================
  * FUNCTION: oaltar
  */
-void oaltar(void)
+void oaltar(int ans)
 {
-  long k;
-  int  p;
-  int  ans;
-  int  redo;
-
-  do
-  {
-    redo = 0;
-    ans = get_prompt_input(
-            "\nDo you (p) pray  (d) desecrate, or (i) ignore it? ",
-            "pdi\033", 1);
+    int  p;
 
     switch (ans)
     {
       case 'p':
-        Print(" pray");
-        ans = get_prompt_input(
-                "\nDo you (m) give money or (j) just pray? ",
-                "mj", 1);
+        set_callback("act_on_object");
+		add_option('m', "Give Money", "");
+		add_option('j', "Just Pray", "");
+		break;
 
-        switch (ans)
-        {
-          case 'j':
-            p = rund(100);
-            if      (p < 12) createmonster(makemonst(level+2));
-            else if (p < 17) enchweapon(ENCH_ALTAR);
-            else if (p < 22) enchantarmor(ENCH_ALTAR);
-            else if (p < 27) ohear();
-            else             Print("\nNothing happens.");
-            break;
+      case 'j':
+        p = rund(100);
+        if      (p < 12) createmonster(makemonst(level+2));
+        else if (p < 17) enchweapon(ENCH_ALTAR);
+        else if (p < 22) enchantarmor(ENCH_ALTAR);
+        else if (p < 27) ohear();
+        else             Print("Nothing happens.");
+        break;
 
-          case 'm':
-            Print("\nHow much do you donate? ");
-            k = get_num_input(c[GOLD]);
-
-            if (k < 0)
-            {
-              redo = 1;
-            }
-            else if (c[GOLD] < k)
-            {
-              Print(" You don't have that much!");
-              nap(1001);
-              redo = 1;
-            }
-            else
-            {
-              /*
-               * Remove gold from player
-               */
-              c[GOLD] -= k;
-
-              if ((k < (c[GOLD]/10)) && (rnd(60)<30) && !wizard)
-              {
-                /*
-                 * Player offers < 1/11% of gold insults the gods 50% of the time.
-                 * Insulted gods send a demon prince to punish the player.
-                 */
-                Print(" Cheapskate! The Gods are insulted by such a tiny offering!");
-                forget();
-                createmonster(DEMONPRINCE);
-                c[AGGRAVATE] += 1500;
-                /* God takes more gold anyway */ 
-                c[GOLD] -= k;
-              }
-              else if (((k < (c[GOLD]+k)/10) || (k < rnd(50))) && !wizard)
-              {
-                /*
-                 * Player offers more than 1/11, but less than 1/10 of gold.
-                 * God has a chance of sending a monster to encourage the player
-                 * to be more generous based on how far below 50 gold the
-                 * amount doneted is.
-                 */
-                createmonster(makemonst(level+2));
-                c[AGGRAVATE] += 500;
-                /* God takes more gold anyway */
-                c[GOLD] -= k;
-              }
-              else
-              {
-                /*
-                 * Player was reasonably generous, so give a blessing
-                 */
-                p = rund(16);
-                if (p <  4)
-                {
-                  Print(" Thank you.");
-                }
-                else if (p <  6)
-                {
-                  enchantarmor(ENCH_ALTAR);
-                  enchantarmor(ENCH_ALTAR);
-                }
-                else if (p < 8)
-                {
-                  enchweapon(ENCH_ALTAR);
-                  enchweapon(ENCH_ALTAR);
-                }
-                else
-                {
-                  ohear();
-                }
-
-              }
-
-              UpdateStatus();
-            }
-            break;
-
-          default:
-           break;
-
-        } /* end while switch : case j or m */
+      case 'm':
+        print_header("How much do you donate? ");
+		set_input_type("number");
+		set_callback("oaltar_m");
         break;
 
       case 'd':
-        Print(" desecrate");
         if (rnd(100)<60)
         {
           createmonster(makemonst(level+3)+8);
@@ -409,19 +318,18 @@ void oaltar(void)
         }
         else if (rnd(101)<30)
         {
-          Print("\nThe altar crumbles into a pile of dust before your eyes.");
+          Print("The altar crumbles into a pile of dust before your eyes.");
           forget();
         }
         else
         {
-          Print("\nNothing happens.");
+          Print("Nothing happens.");
         }
         UpdateStatus();
         break;
 
       case 'i':
       case ESC:
-        Print(" ignore");
         if (rnd(100)<30)
         {
           createmonster(makemonst(level+2));
@@ -429,32 +337,105 @@ void oaltar(void)
         }
         else
         {
-          Print("\nNothing happens.");
+          Print("Nothing happens.");
         }
         break;
 
     } /* end while switch: pray, des, ignore */
 
-  } while (redo);
+}
 
+void oaltar_m(long k)
+{
+    if (k < 0)
+    {
+		set_input_type("number");
+		set_callback("oaltar_m");
+		return;
+    }
+    else if (c[GOLD] < k)
+    {
+        Print("You don't have that much!");
+        nap(1001);
+		set_input_type("number");
+		set_callback("oaltar_m");
+		return;
+    }
+    else
+    {
+        /*
+        * Remove gold from player
+        */
+        c[GOLD] -= k;
+
+        if ((k < (c[GOLD]/10)) && (rnd(60)<30) && !wizard)
+        {
+			/*
+            * Player offers < 1/11% of gold insults the gods 50% of the time.
+            * Insulted gods send a demon prince to punish the player.
+            */
+			Print("Cheapskate! The Gods are insulted by such a tiny offering!");
+			forget();
+			createmonster(DEMONPRINCE);
+			c[AGGRAVATE] += 1500;
+			/* God takes more gold anyway */ 
+			c[GOLD] -= k;
+        }
+        else if (((k < (c[GOLD]+k)/10) || (k < rnd(50))) && !wizard)
+        {
+			/*
+            * Player offers more than 1/11, but less than 1/10 of gold.
+            * God has a chance of sending a monster to encourage the player
+            * to be more generous based on how far below 50 gold the
+            * amount doneted is.
+            */
+			createmonster(makemonst(level+2));
+			c[AGGRAVATE] += 500;
+			/* God takes more gold anyway */
+			c[GOLD] -= k;
+        }
+        else
+        {
+			/*
+            * Player was reasonably generous, so give a blessing
+            */
+			int p = rund(16);
+			if (p <  4)
+			{
+				Print("Thank you.");
+			}
+			else if (p <  6)
+			{
+				enchantarmor(ENCH_ALTAR);
+				enchantarmor(ENCH_ALTAR);
+			}
+			else if (p < 8)
+			{
+				enchweapon(ENCH_ALTAR);
+				enchweapon(ENCH_ALTAR);
+			}
+			else
+			{
+				ohear();
+			}
+
+        }
+
+        UpdateStatus();
+        nomove = 1;
+    }
 }
 
 /* =============================================================================
  * FUNCTION: othrone
  */
-void othrone(int arg)
+void othrone(int arg, int ans)
 {
   int i,k;
-  int ans;
-
-  ans = get_prompt_input(
-          "\nDo you (p) pry off jewels, (s) sit down, or (i) ignore it? ",
-          "psi\033", 1);
 
   switch (ans)
   {
     case 'p':
-      Print(" pry off");
       k = rnd(101);
       if (k<25)
       {
@@ -471,12 +452,11 @@ void othrone(int arg)
       }
       else
       {
-        Print("\nNothing happens.");
+        Print("Nothing happens.");
       }
       break;
 
     case 's':
-      Print(" sit down");
       k = rnd(101);
       if ((k<30) && (arg==0))
       {
@@ -485,19 +465,18 @@ void othrone(int arg)
       }
       else if (k<35)
       {
-        Print("\nZaaaappp!  You've been teleported!\n");
+        Print("Zaaaappp!  You've been teleported!");
         UlarnBeep();
         oteleport(0);
       }
       else
       {
-        Print("\nNothing happens.");
+        Print("Nothing happens.");
       }
       break;
 
     case 'i':
     case ESC:
-      Print(" ignore");
       break;;
   }
 }
@@ -505,19 +484,13 @@ void othrone(int arg)
 /* =============================================================================
  * FUNCTION: odeadthrone
  */
-void odeadthrone(void)
+void odeadthrone(int ans)
 {
   int k;
-  int ans;
-
-  ans = get_prompt_input(
-          "\nDo you (s) sit down, or (i) ignore it? ",
-          "si\033", 1);
 
   switch (ans)
   {
     case 's':
-      Print(" sit down");
       k = rnd(101);
       if (k<5)
       {
@@ -525,19 +498,18 @@ void odeadthrone(void)
       }
       else if (k<25)
       {
-        Print("\nZaaaappp!  You've been teleported!\n");
+        Print("Zaaaappp!  You've been teleported!");
         UlarnBeep();
         oteleport(0);
       }
       else
       {
-        Print("\nNothing happens.");
+        Print("Nothing happens.");
       }
       break;
 
     case 'i':
     case ESC:
-      Print(" ignore");;
       break;
 
   }
@@ -546,22 +518,16 @@ void odeadthrone(void)
 /* =============================================================================
  * FUNCTION: ofountain
  */
-void ofountain(void)
+void ofountain(int ans)
 {
   int x;
-  int ans;
-
-  ans = get_prompt_input(
-          "\nDo you (d) drink, (w) wash yourself, or (i) ignore it? ",
-          "dwi\033", 1);
 
   switch (ans)
   {
     case 'd':
-      Print("drink");
       if (rnd(1501) < 4)
       {
-        Print("\nOH MY GOD!! You have caught the *dreadful sleep*!");
+        Print("OH MY GOD!! You have caught the *dreadful sleep*!");
         UlarnBeep();
         nap(3000);
         died(DIED_DREADFUL_SLEEP, 0);
@@ -577,7 +543,7 @@ void ofountain(void)
         else if (x < 11)
         {
           x = rnd((level<<2)+2);
-          Printf("\nBleah! The water tasted like stale gatorade!  You lose %d hit point%s!",
+          Printf("Bleah! The water tasted like stale gatorade!  You lose %d hit point%s!",
                  (long)x, plural(x));
          
           losehp(DIED_DRANK_POISONOUS_WATER, x);
@@ -586,19 +552,19 @@ void ofountain(void)
         else if (x<14)
         {
           c[HALFDAM] += 200+rnd(200);
-          Print("\nThe water makes you vomit.");
+          Print("The water makes you vomit.");
         }
         else if (x<17)
         {
           /* Same effect as giant strength */
-          Print("\n  You now have incredible bulging muscles!");
+          Print("You now have incredible bulging muscles!");
           if (c[GIANTSTR]==0) c[STREXTRA] += PGIANTSTR_BOOST;
           c[GIANTSTR] += 700;
           UpdateEffects();
         }
         else if (x < 45)
         {
-          Print("\nNothing seems to have happened.");
+          Print("Nothing seems to have happened.");
         }
         else if (rnd(3) != 2)
         {
@@ -611,7 +577,7 @@ void ofountain(void)
 
         if (rnd(12) < 3)
         {
-          Print("\nThe fountains bubbling slowly quietens.");
+          Print("The fountains bubbling slowly quietens.");
           /* dead fountain */
           item[playerx][playery] = ODEADFOUNTAIN;
         }
@@ -620,15 +586,13 @@ void ofountain(void)
 
     case 'i':
     case ESC:
-      Print(" ignore");
       break;
 
     case 'w':
-      Print("wash yourself.");
       if (rnd(100) < 11)
       {
         x = rnd((level<<2)+2);
-        Printf("\nThe water burns like acid!  You lose %d hit point%s!",
+        Printf("The water burns like acid!  You lose %d hit point%s!",
                (long)x, plural(x));
 
         losehp(DIED_DRANK_POISONOUS_WATER, x);
@@ -636,7 +600,7 @@ void ofountain(void)
       }
       else if (rnd(100) < 29)
       {
-        Print("\nYou are now clean.");
+        Print("You are now clean.");
         if (c[ITCHING])
         {
           /* 
@@ -648,7 +612,7 @@ void ofountain(void)
       }
       else if (rnd(100) < 31)
       {
-        Print("\nThis water needs soap -- the dirt didn't come off.");
+        Print("This water needs soap -- the dirt didn't come off.");
       }
       else if (rnd(100) < 34)
       {
@@ -656,7 +620,7 @@ void ofountain(void)
       }
       else
       {
-        Print("\nNothing seems to have happened.");
+        Print("Nothing seems to have happened.");
       }
       break;
   }
@@ -665,36 +629,21 @@ void ofountain(void)
 /* =============================================================================
  * FUNCTION: ostairs
  */
-void ostairs(int dir)
+void ostairs(int dir, int ans)
 {
   int x, y;
-  int ans;
-
-  Print("\nDo you (s) stay here  or  ");
-  if (dir > 0)
-  {
-    Print("(u) go up?  ");
-  }
-  else
-  {
-    Print("(d) go down?  ");
-  }
-
-  ans = get_prompt_input("", "sudi\033", 1);
 
   switch (ans)
   {
     case ESC:
     case 's':
     case 'i':
-      Print("stay here.");
       return;
 
     case 'u':
-      Print("go up.");
       if (dir < 0)
       {
-        Print("\nThe stairs don't go up!");
+        Print("The stairs don't go up!");
       }
       else
       {
@@ -730,16 +679,15 @@ void ostairs(int dir)
         }
         else
         {
-          Print("\nThe stairs lead to a dead end!");
+          Print("The stairs lead to a dead end!");
         }
       }
       break;
 
     case 'd':
-      Print("go down.");
       if (dir > 0)
       {
-        Print("\nThe stairs don't go down!");
+        Print("The stairs don't go down!");
       }
       else
       {
@@ -775,7 +723,7 @@ void ostairs(int dir)
         }
         else
         {
-          Print("\nThe stairs lead to a dead end!");
+          Print("The stairs lead to a dead end!");
         }
       }
       break;
@@ -871,7 +819,7 @@ void opit(void)
     /* Never fall into a pit if the player has a wand of wonder */
     if (player_has_item(OWWAND))
     {
-      Print("\nYou float right over the pit.");
+      Print("You float right over the pit.");
       return;
     }
 
@@ -885,14 +833,14 @@ void opit(void)
       if (rnd(101)<20)
       {
         i = 0;
-        Print("\nYou fell ino a pit!  A poor monster cushions your fall!\n");
+        Print("You fell ino a pit!  A poor monster cushions your fall!");
       }
       else
       {
         i = rnd(level*3+3);
         if (i > c[HP]) i = c[HP];
 
-        Printf("\nYou fell into a pit!  You suffer %d hit point%s damage.",
+        Printf("You fell into a pit!  You suffer %d hit point%s damage.",
                (long)i, plural(i));
 
       }
@@ -917,7 +865,7 @@ void oelevator(int dir)
     /* going up */
     if (level == 0)
     {
-      Print(",\nunfortunately, it is out of order.");
+      Print(", unfortunately, it is out of order.");
       return;
     }
 
@@ -946,7 +894,7 @@ void oelevator(int dir)
     if ((level==DBOTTOM) || (level==VBOTTOM))
     {
       nap(2000);
-      Print("\nand it leads straight to HELL!");
+      Print("and it leads straight to HELL!");
       UlarnBeep();
       nap(3000);
       died(DIED_ELEVATOR_TO_HELL, 0);

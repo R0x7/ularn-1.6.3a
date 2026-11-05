@@ -47,6 +47,7 @@
 #define __MONSTER_H
 
 #include "dungeon.h"
+#include "MemoryFile.h"
 
 #define MAXMONST 57   /* maximum # monsters in the dungeon  */
 
@@ -411,7 +412,7 @@ void parse2(void);
  *
  *   None.
  */
-void write_monster_data(FILE *fp);
+void write_monster_data(MemoryFile *fp);
 
 /* =============================================================================
  * FUNCTION: read_monster_data
@@ -427,6 +428,6 @@ void write_monster_data(FILE *fp);
  *
  *   None.
  */
-void read_monster_data(FILE *fp);
+void read_monster_data(MemoryFile *fp);
 
 #endif

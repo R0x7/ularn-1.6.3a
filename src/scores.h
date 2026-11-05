@@ -71,6 +71,8 @@ typedef enum
   DIED_COUNT
 } DiedReasonType;
 
+extern char player_score_json[200];
+
 /* =============================================================================
  * FUNCTION: makeboard
  *

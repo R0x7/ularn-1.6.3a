@@ -85,6 +85,7 @@
 #include "scroll.h"
 #include "spell.h"
 #include "scores.h"
+#include "MemoryFile.h"
 
 #define INNATE_TELEPORT_LEVEL 10
 
@@ -849,7 +850,7 @@ void adjusttime(long tim);
  *
  *   None.
  */
-void write_player(FILE *fp);
+void write_player(MemoryFile *fp);
 
 /* =============================================================================
  * FUNCTION: read_player
@@ -865,6 +866,6 @@ void write_player(FILE *fp);
  *
  *   None.
  */
-void read_player(FILE *fp);
+void read_player(MemoryFile *fp);
 
 #endif

@@ -263,60 +263,37 @@ static long calc_score(int Winner)
  *   -1 if unable to read in the scoreboard,
  *    0 if all is OK
  */
-static int readboard(void)
+//extern char *getScoreboard();
+
+static int readboard()
 {
-  FILE *fp;
-  int n;
+  /*MemoryFile *fp;
   struct score_header_type header;
 
-  fp = fopen(scorefile, "rb");
+  char *data = getScoreboard();
+  fp = MemoryFile_open(data);
 
-  if (fp == (FILE *)NULL)
-  {
-    Printf("Can't open scorefile '%s' for reading\n", scorefile);
-    return(-1);
-  }
-
-  n = fread((char *) &header, sizeof(struct score_header_type), 1, fp);
-  if (n != 1)
-  {
-    Print("Can't read score board header\n");
-    fclose(fp);
-    return (-2);
-  }
+  MemoryFile_read(fp, (unsigned char *)&header, sizeof(struct score_header_type));
 
   if (strncmp(header.Id, CurrentHeader.Id, 4) != 0)
   {
-    Print("Not a valid ularn score board\n");
-    fclose(fp);
+    Print("Not a valid ularn score board");
+    MemoryFile_dispose(fp);
     return (-3);
   }
 
   if (header.Format != CurrentHeader.Format)
   {
-    Print("Incorrect score board version\n");
-    fclose(fp);
+    Print("Incorrect score board version");
+    MemoryFile_dispose(fp);
     return (-4);
   }
 
-  n = fread((char *)scoreboard, sizeof(struct score_type) * SCORESIZE, 1, fp);
+  MemoryFile_read(fp, (unsigned char *)scoreboard, sizeof(struct score_type) * SCORESIZE);
+  MemoryFile_read(fp, (unsigned char *)winboard, sizeof(struct win_score_type) * SCORESIZE);
 
-  if (n != 1)
-  {
-    Print("Can't read scoreboard\n");
-    fclose(fp);
-    return(-5);
-  }
-
-  n = fread((char *)winboard, sizeof(struct win_score_type) * SCORESIZE, 1, fp);
-  if (n != 1)
-  {
-    Print("Can't read scoreboard");
-    fclose(fp);
-    return(-6);
-  }
-
-  fclose(fp);
+  MemoryFile_dispose(fp);
+  free(data);*/
 
   return(0);
 }
@@ -336,45 +313,29 @@ static int readboard(void)
  *   -1 if unable to write the scoreboard,
  *    0 if all is OK
  */
+//extern void saveScoreboard(char *data);
+
 static int writeboard(void)
 {
-  FILE *fp;
+  /*MemoryFile *fp;
   int n;
 
-  fp = fopen(scorefile, "wb");
-  if (fp == (FILE *)NULL)
+  fp = MemoryFile_create();
+  if (fp == NULL)
   {
-    Print("Can't open scorefile for writing\n");
+    Print("Can't open scorefile for writing");
     return(-1);
   }
 
-  n = fwrite((char *) &CurrentHeader, sizeof(struct score_header_type), 1, fp);
-  if (n != 1)
-  {
-    Print("Can't write scorefile\n");
-    fclose(fp);
-    return(-1);
-  }
+  MemoryFile_write(fp, (unsigned char *)&CurrentHeader, sizeof(struct score_header_type));
+  MemoryFile_write(fp, (unsigned char *)scoreboard, sizeof(struct score_type) * SCORESIZE);
+  MemoryFile_write(fp, (unsigned char *)winboard, sizeof(struct win_score_type) * SCORESIZE);
+  
+  saveScoreboard(fp->start);
+  
+  MemoryFile_dispose(fp);*/
 
-  n = fwrite((char *)scoreboard, sizeof(struct score_type) * SCORESIZE, 1, fp);
-  if (n != 1)
-  {
-    Print("Can't write scorefile\n");
-    fclose(fp);
-    return(-1);
-  }
-
-  n = fwrite((char *)winboard, sizeof(struct win_score_type) * SCORESIZE, 1, fp);
-  if (n != 1)
-  {
-    Print("Can't write scorefile\n");
-    fclose(fp);
-    return(-1);
-  }
-
-  fclose(fp);
-
-  return(0);
+  return (0);
 }
 
 /* =============================================================================
@@ -644,8 +605,9 @@ static int newscore(long score, int winner, DiedReasonType died_reason, int what
  *
  *   None
  */
-static void print_died_reason(DiedReasonType Reason, int Monster, int lev)
+static char *get_died_reason(DiedReasonType Reason, int Monster, int lev)
 {
+  static char died_reason[100];
   char ch;
   char *mod;
 
@@ -661,7 +623,7 @@ static void print_died_reason(DiedReasonType Reason, int Monster, int lev)
     {
       mod = "a";
     }
-    Printf(" killed by %s %s", mod, monster[Monster].name);
+    sprintf(died_reason, " killed by %s %s", mod, monster[Monster].name);
   }
   else
   {
@@ -673,11 +635,11 @@ static void print_died_reason(DiedReasonType Reason, int Monster, int lev)
       switch (Reason)
       {
         case DIED_KILLED_FAMILY:
-          Printf(" killed her family and committed suicide");
+          strcpy(died_reason, " killed her family and committed suicide");
           break;
 
         case DIED_OWN_MAGIC:
-          Printf(" hit by her own magic");
+          strcpy(died_reason, " hit by her own magic");
           break;
 
         default:
@@ -686,18 +648,20 @@ static void print_died_reason(DiedReasonType Reason, int Monster, int lev)
     }
     else
     {
-      Printf(" %s", whydead[Reason]);
+      sprintf(died_reason, " %s", whydead[Reason]);
     }
   }
 
   if (Reason != DIED_WINNER)
   {
-    Printf(" on %s\n", levelname[lev]);
+    sprintf(died_reason + strlen(died_reason), " on %s", levelname[lev]);
   }
-  else
-  {
-    Printf("\n");
-  }
+  return died_reason;
+}
+ 
+static void print_died_reason(DiedReasonType Reason, int Monster, int lev)
+{
+  Print(get_died_reason(Reason, Monster, lev));
 }
 
 /* =============================================================================
@@ -732,9 +696,8 @@ static int show_winners(void)
 
   if (win_count > 0)
   {
-    ClearText();
     clearpager();
-    Print("   Score       Diff   Time Needed  Ularn Winners List\n");
+    Print("Score       Diff   Time Needed  Ularn Winners List");
     pager();
     
     /* needed to print out the winners in order */
@@ -748,7 +711,7 @@ static int show_winners(void)
 
         if ((p->order == i)&& (p->score > 0))
         {
-          Printf("%-10ld%8d%8d Mobuls  (%s) %s\n",
+          Printf("%-10ld%8d%8d Mobuls  (%s) %s",
                  p->score,
                  p->hardlev,
                  p->timeused,
@@ -818,9 +781,8 @@ static int show_visitors(int show_inv)
 
   if (count > 0)
   {
-    ClearText();
     clearpager();
-    Print("  Score Diff  Ularn Visitor Log\n");
+    Print("Score Diff  Ularn Visitor Log");
     pager();
 
     for (i = 0 ; i < count ; i++)
@@ -829,11 +791,6 @@ static int show_visitors(int show_inv)
       {
         if ((scoreboard[j].order == i) && (scoreboard[j].score > 0))
         {
-          if ((j == highlight_pos) && (!highlight_win))
-          {
-            SetFormat(FORMAT_STANDOUT);
-          }
-
           Printf("%7ld %3ld   (%s) %s ",
                  scoreboard[j].score,
                  (long) scoreboard[j].hardlev,
@@ -841,11 +798,6 @@ static int show_visitors(int show_inv)
                  scoreboard[j].who);
 
           print_died_reason(scoreboard[j].reason , scoreboard[j].what, scoreboard[j].level);
-
-          if ((j == highlight_pos) && (!highlight_win))
-          {
-            SetFormat(FORMAT_NORMAL);
-          }
 
           pager();
 
@@ -905,6 +857,18 @@ static int show_visitors(int show_inv)
  *
  *   None.
  */
+//extern void showPlayerScore(char *json);
+
+char player_score_json[200] = "";
+
+char *get_player_score_json()
+{
+  static char buffer[200];
+  strcpy(buffer, player_score_json);
+  player_score_json[0] = 0;
+  return buffer;
+}
+
 static void show_player_score(DiedReasonType Reason, int Monster, long score)
 {
   char *cls;
@@ -916,28 +880,7 @@ static void show_player_score(DiedReasonType Reason, int Monster, long score)
     strcpy(char_class, "<unknown>");
   }
 
-  Print("---------------------------------------------------------------\n");
-  Print("                 U L A R N    S C O R E S\n");
-  Print("---------------------------------------------------------------\n");
-  Printf("Score: %ld  Diff: %d  ", score, c[HARDGAME]);
-  Printf("Level: %s  Char: %s\n", cls, char_class);
-  Printf("\t%s", logname);
-
-  print_died_reason(Reason, Monster, level);
-
-  if (wizard)
-  {
-    Print(" (wizard)");
-  }
-
-  if (cheat)
-  {
-    Print(" (cheater)");
-  }
-
-  Print("\n");
-  Print("---------------------------------------------------------------");
-
+  sprintf(player_score_json, "{\"score\":%ld,\"diff\":%ld,\"level\":\"%s\",\"char\":\"%s\",\"diedReason\":\"%s\"}", score, c[HARDGAME], cls, char_class, get_died_reason(Reason, Monster, level));
 }
 
 /* =============================================================================
@@ -967,10 +910,6 @@ int makeboard(void)
   {
     return(-1);
   }
-
-#ifdef UNIX
-  chmod(scorefile, 0666);
-#endif
 
   return(0);
 }
@@ -1057,26 +996,17 @@ void showscores(void)
 
   if (readboard() < 0)
   {
-    get_prompt_input("\nPress return to continue", "\015", 0);
     return;
   }
   
   i = show_winners();
 
-  if (i > 0)
-  {
-    get_prompt_input("\nPress return to continue", "\015", 0);
-  }
-  
   j = show_visitors(0);
 
   if ((i + j) == 0)
-    Print("\nThe scoreboard is empty.\n");
+    Print("The scoreboard is empty.");
   else
-    Print("\n");
-
-  get_prompt_input("\nPress return to continue", "\015", 0);
-
+    Print("");
 }
 
 /* =============================================================================
@@ -1096,15 +1026,12 @@ void showallscores(void)
 
   if ((i + j) == 0)
   {
-    Print("\nThe scoreboard is empty.\n");
+    Print("The scoreboard is empty.");
   }
   else
   {
-    Print("\n");
+    Print("");
   }
-
-  get_prompt_input("\nPress return to continue", "\015", 0);
-
 }
 
 /* =============================================================================
@@ -1116,12 +1043,6 @@ void endgame(void)
 
   free_cells();
   free_spheres();
-
-  /* close the application */
-  close_app();
-
-  /* and exit */
-  exit(0);
 }
 
 /* =============================================================================
@@ -1167,7 +1088,7 @@ void died(DiedReasonType Reason, int Monster)
       --c[LIFEPROT];
       c[HP] = c[HPMAX];
       --c[CONSTITUTION];
-      Print("\nYou feel wiiieeeeerrrrrd all over! ");
+      Print("You feel wiiieeeeerrrrrd all over! ");
       UlarnBeep();
       nap(4000);
 
@@ -1184,8 +1105,7 @@ void died(DiedReasonType Reason, int Monster)
   if ((Reason == DIED_QUICK_QUIT) || (Reason == DIED_SUSPENDED))
   {
     /* for quick exit or saved game */
-    ClearText();
-    Printf("Tidying up...\n");
+    Printf("Tidying up...");
     
     endgame();
   }
@@ -1195,13 +1115,8 @@ void died(DiedReasonType Reason, int Monster)
   /* Now calculate the player's final score */
   score = calc_score(win);
 
-  set_display(DISPLAY_TEXT);
-  ClearText();
-
   /* Show the players final score */
   show_player_score(Reason, Monster, score);
-
-  get_prompt_input("\nPress return to continue", "\015", 0);
 
 
   if (!(wizard || cheat))
@@ -1215,13 +1130,12 @@ void died(DiedReasonType Reason, int Monster)
   if (scorerror == 0)
   {
     /* if we updated the scoreboard*/
-    showscores();
+    //showscores();
   }
 
   /* if (win && mail) mailbill(); */
 
-  ClearText();
-  Print("\n");
+  Print("");
 
   /* exit the game */
   endgame();

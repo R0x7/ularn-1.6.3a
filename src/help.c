@@ -66,30 +66,6 @@ static FILE *help_fp;
  */
 
 /* =============================================================================
- * FUNCTION: retcont
- *
- * DESCRIPTION:
- * Function to say press return to continue.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-static void retcont (void)
-{
-  MoveCursor(1, 24);
-  Print("Press ");
-  Standout("return");
-  Print(" to continue: ");
-
-  get_prompt_input("", "\015\033", 0);
-}
-
-/* =============================================================================
  * FUNCTION: openhelp
  *
  * DESCRIPTION:
@@ -141,8 +117,6 @@ static void show_help_page(void)
   int line_pos;
   char tmbuf[128];
 
-  ClearText();
-
   for (line = 0; line < 23 ; line++)
   {
     fgets(tmbuf, 128, help_fp);
@@ -178,22 +152,15 @@ static void show_help_page(void)
         case HELP_ESC:
           if (tmbuf[line_pos] == '7')
           {
-            SetFormat(FORMAT_STANDOUT);
             line_pos++;
           }
           else if (tmbuf[line_pos] == '8')
           {
-            SetFormat(FORMAT_STANDOUT2);
             line_pos++;
           }
           else if (tmbuf[line_pos] == '9')
           {
-            SetFormat(FORMAT_STANDOUT3);
             line_pos++;
-          }
-          else if (tmbuf[line_pos] == 'm')
-          {
-            SetFormat(FORMAT_NORMAL);
           }
 
           line_pos++;
@@ -223,14 +190,11 @@ void help (void)
   int i;
   char tmbuf[128];
 
-  set_display(DISPLAY_TEXT);
-
   /* open the help file and get # pages */
   num_pages = openhelp();
 
   if (num_pages < 0)
   {
-    set_display(DISPLAY_MAP);
     return;
   }
 
@@ -243,32 +207,9 @@ void help (void)
   for (page = num_pages ; page > 0 ; page--)
   {
     show_help_page();
-
-    /* intercept ESC's */
-    if (page > 1)
-    {
-      Print("    ---- Press ");
-      Standout("return");
-      Print(" to exit, ");
-      Standout("space");
-      Print(" for more help ---- ");
-
-      i = get_prompt_input("", " \015\033", 0);
-
-      if ((i == '\015') || (i == ESC))
-      {
-        fclose(help_fp);
-        set_display(DISPLAY_MAP);
-
-        return;
-      }
-    }
   }
 
   fclose(help_fp);
-  retcont();
-
-  set_display(DISPLAY_MAP);
 
 }
 
@@ -277,24 +218,22 @@ void help (void)
  */
 void welcome (void)
 {
-  int num_pages;
-
-  set_display(DISPLAY_TEXT);
-
-  /* open the help file */
-  num_pages = openhelp();
-  if (num_pages < 0) return;
-
-  show_help_page();
-
-  fclose(help_fp);
-
-  /* press return to continue */
-  retcont();
-
-  set_display(DISPLAY_MAP);
-
-
+  print_header("<p>Welcome to the game of Ularn.  At this moment, you face a great problem.  ");
+  print_header("Your daughter has contracted a strange disease and none of your home remedies ");
+  print_header("seems to have any effect.  You sense that she is in mortal danger and you must ");
+  print_header("try to save her.  Time ago you heard of a land of great danger and opportunity.  ");
+  print_header("Perhaps here is the solution you need.</p>");
+  print_header("<p>It has been said that there once was a great magician who called himself ");
+  print_header("Polinneaus.  Many years ago, after having many miraculous successes, Polinneaus ");
+  print_header("retired to the caverns of Ularn, where he devoted most of his time to the ");
+  print_header("creation of magic.   Rumors have it that one day Polinneaus set out to dispel ");
+  print_header("an attacking army in a forest some distance to the north.  It is believed that ");
+  print_header("there he met his demise.</p>");
+  print_header("<p>The caverns of Ularn, it is thought, must be magnificent in design ");
+  print_header("and contain much magic and treasure.  One option you have is to undertake a ");
+  print_header("journey into these caverns.</p>");
+  set_callback("*");
+  add_option(-1, "Good Luck!  (You're going to need it.)", "");
 }
 
 

@@ -280,7 +280,7 @@ void read_options(void)
         do
         {
           /* get the option string */
-          tok = strtok(NULL, ",:\n");
+          tok = strtok(NULL, ",:");
 
           /* identify the option */
           if (tok == NULL)
@@ -310,17 +310,17 @@ void read_options(void)
               break;
 
             case OPTION_NAME:
-              tok = strtok(NULL, ":,\n");
+              tok = strtok(NULL, ":,");
               strncpy(logname, tok, LOGNAMESIZE);
               break;
 
             case OPTION_CLASS:
-              tok = strtok(NULL, ":,\n");
+              tok = strtok(NULL, ":,");
               char_picked = identify_class(tok);
               break;
 
             case OPTION_GENDER:
-              tok = strtok(NULL, ":,\n");
+              tok = strtok(NULL, ":,");
               if (strcmp(tok, "male") == 0)
               {
                 sex = 1;
@@ -331,7 +331,7 @@ void read_options(void)
               }
               else
               {
-                Printf("\nUnknown gender '%s'", tok);
+                Printf("Unknown gender '%s'", tok);
               }
               break;
 
@@ -368,24 +368,24 @@ void read_options(void)
               break;
 
             default:
-              Printf("\nUnrecognised option '%s'", tok);
+              Printf("Unrecognised option '%s'", tok);
               break;
           }
         } while ((OptionId != OPTION_NULL) && (OptionId < OPTION_COUNT));
       }
       else if (strcmp(tok, "LIBDIR") == 0)
       {
-        tok = strtok(NULL, ":\n");
+        tok = strtok(NULL, ":");
         strcpy(libdir, tok);
       }
       else if (strcmp(tok, "SAVEDIR") == 0)
       {
-        tok = strtok(NULL, ":\n");
+        tok = strtok(NULL, ":");
         strcpy(savedir, tok);
       }
       else
       {
-        Printf("\nUnrecognised option '%s'", tok);
+        Printf("Unrecognised option '%s'", tok);
       }
     }
   }

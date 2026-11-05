@@ -101,7 +101,7 @@ static char *UseStrings[USE_COUNT] =
  */
 static void ydhi (int x)
 {
-  Printf("\nYou don't have item %c!", x);
+  Printf("You don't have item %c!", x);
 }
 
 /* =============================================================================
@@ -120,126 +120,9 @@ static void ydhi (int x)
  */
 static void ycwi (int x)
 {
-  Printf("\nYou can't wield item %c!", x);
+  Printf("You can't wield item %c!", x);
 }
 
-/* =============================================================================
- * FUNCTION: whatitem
- *
- * DESCRIPTION:
- * Ask the player what item to use for a particular use and gets the
- * player's response.
- *
- * PARAMETERS:
- *
- *   Use : The use to which the item is to be put.
- *
- * RETURN VALUE:
- *
- *   The character input:
- *     the index of the item (a .. z) or
- *     '*' for show list or,
- *     '-' for nothing (wield only) or,
- *     '.' for gold (drop only) or,
- *     ESC for abort action.
- */
-static int whatitem (UseType Use)
-{
-  int j;
-  int i = 0;
-  UseType ItemUse;
-  char tmp[IVENSIZE+2]; // Each item + gold + null terminator
-  char prompt[80];
-  char Ans;
-
-  if (Use == USE_DROP)
-  {
-    tmp[i++] = '.';
-  }
-
-  for (j = 0; j < IVENSIZE; j++)
-  {
-    switch (iven[j])
-    {
-      case ONOTHING:
-        ItemUse = USE_COUNT;
-        break;
-      case OSWORDofSLASHING:
-      case OHAMMER:
-      case OSWORD:
-      case O2SWORD:
-      case OSPEAR:
-      case ODAGGER:
-      case OBATTLEAXE:
-      case OLONGSWORD:
-      case OFLAIL:
-      case OSLAYER:
-      case OLANCE:
-      case OVORPAL:
-        ItemUse = USE_WIELD;
-        break;
-      case OPOTION:
-        ItemUse = USE_QUAFF;
-        break;
-      case OSCROLL:
-      case OBOOK:
-        ItemUse = USE_READ;
-        break;
-      case OPLATE :
-      case OCHAIN:
-      case OLEATHER :
-      case ORING :
-      case OSTUDLEATHER :
-      case OSPLINT :
-      case OPLATEARMOR :
-      case OSSPLATE :
-      case OSHIELD :
-      case OELVENCHAIN :
-        ItemUse = USE_WEAR;
-        break;
-      case OCOOKIE:
-        ItemUse = USE_EAT;
-        break;
-      default:
-        ItemUse = USE_DROP;
-        break;
-    }
-
-    if ((ItemUse != USE_COUNT) && ((Use == USE_DROP) || (ItemUse == Use)))
-    {
-      tmp[i++] = (char) (j + 'a');
-    }
-  }
-
-  tmp[i] = '\0';
-
-  sprintf(prompt,
-          "\nWhat do you want to %s [%s * for all%s] ?",
-          UseStrings[Use],
-          tmp,
-          (Use==USE_WIELD) ? " - for none":"");
-
-
-  if (Use == USE_WIELD)
-  {
-    Ans = get_prompt_input(prompt, SelectWieldAns, 1);
-  }
-  else if (Use == USE_DROP)
-  {
-    Ans = get_prompt_input(prompt, SelectDropAns, 1);
-  }
-  else
-  {
-    Ans = get_prompt_input(prompt, SelectItemAns, 1);
-  }
-
-  if (Ans == ESC)
-  {
-    Print(" aborted.");
-  }
-
-  return(Ans);
-}
 
 
 /* =============================================================================
@@ -273,15 +156,12 @@ void run (int dir)
 /* =============================================================================
  * FUNCTION: wield
  */
-void wield (void)
+void wield (int i)
 {
-  int i;
   int it;
 
   while (1)
   {
-    i = whatitem(USE_WIELD);
-
     if (i == ESC)
     {
       return;
@@ -293,7 +173,7 @@ void wield (void)
     else if (i == '-')
     {
       c[WIELD] = -1;
-      Print("\nYou unwield your weapon.");
+      Print("You unwield your weapon.");
       recalc();
       UpdateStatus();
       return;
@@ -318,19 +198,19 @@ void wield (void)
       }
       else if ((c[SHIELD] != -1) && (iven[it] == O2SWORD))
       {
-        Print("\nBut one arm is busy with your shield!");
+        Print("But one arm is busy with your shield!");
         return;
       }
       else if ((c[WEAR] == it) || (c[SHIELD] == it))
       {
-        Printf("\nYou can't wield your %s while you're wearing it!",
+        Printf("You can't wield your %s while you're wearing it!",
             (c[WEAR] == it) ? "armor" : "shield");
         return;
       }
       else
       {
         c[WIELD] = it;
-        Printf("\nYou wield %s", objectname[(int) iven[it]]);
+        Printf("You wield %s", objectname[(int) iven[it]]);
         show_plusses(ivenarg[it]);
         Printc('.');
 
@@ -346,14 +226,12 @@ void wield (void)
 /* =============================================================================
  * FUNCTION: wear
  */
-void wear (void)
+void wear (int i)
 {
-  int i;
   int it;
 
   while (1)
   {
-    i = whatitem(USE_WEAR);
     if (i == ESC)
     {
       return;
@@ -380,16 +258,11 @@ void wear (void)
         case OPLATEARMOR:
         case OELVENCHAIN:
         case OSSPLATE:
-          if (c[WEAR] != -1)
-          {
-            Print("\nYou are already wearing some armor.");
-            return;
-          }
           c[WEAR] = it;
 
           if (c[WIELD] == it) c[WIELD] = -1;
 
-          Printf("\nYou put on your %s", objectname[(int) iven[it]]);
+          Printf("You put on your %s", objectname[(int) iven[it]]);
           show_plusses(ivenarg[it]);
           Printc('.');
 
@@ -398,20 +271,15 @@ void wear (void)
           return;
 
         case OSHIELD:
-          if (c[SHIELD] != -1)
-          {
-            Print("\nYou are already wearing a shield.");
-            return;
-          }
           if (iven[c[WIELD]] == O2SWORD)
           {
-            Print("\nYour hands are busy with the two handed sword!");
+            Print("Your hands are busy with the two handed sword!");
             return;
           }
           c[SHIELD] = it;
           if (c[WIELD] == it) c[WIELD] = -1;
 
-          Print("\nYou put on your shield");
+          Print("You put on your shield");
 
           show_plusses(ivenarg[it]);
           Printc('.');
@@ -421,7 +289,7 @@ void wear (void)
           return;
 
         default:
-          Print("\nYou can't wear that!");
+          Print("You can't wear that!");
       }
     }
   }
@@ -431,18 +299,12 @@ void wear (void)
 /* =============================================================================
  * FUNCTION: dropobj
  */
-void dropobj (void)
+void dropobj (int i)
 {
-  int i, pitflag=0;
+  int pitflag=0;
   char *p;
-  long amt;
 
   p = &item[playerx][playery];
-
-  while (1)
-  {
-    if ((i = whatitem(USE_DROP))== ESC)
-      return;
 
     if (i=='*')
     {
@@ -450,92 +312,101 @@ void dropobj (void)
     }
     else
     {
+      if (c[TIMESTOP])
+      {
+        Printf("Nothing can be moved while time is stopped!");
+        return;
+      }
       /* drop some gold */
       if (i == '.')
       {
         if (*p == OPIT) pitflag=1;
         if ((*p != ONOTHING) && !pitflag)
         {
-          Print("\nThere's something here already!");
+          Print("There's something here already!");
           return;
         }
 
-        Print("\n\n");
-        Print("How much gold do you drop? ");
-        amt = get_num_input((long)c[GOLD]);
-
-        if (amt <= 0) return;
-
-        if (amt > c[GOLD])
-        {
-          Print("\nYou don't have that much!");
-          return;
-        }
-
-        if (amt <= 32767)
-        {
-          *p=OGOLDPILE;
-          i = (int) amt;
-        }
-        else if (amt <= 327670L)
-        {
-          *p = ODGOLD;
-          i = (int) (amt/10);
-          amt = 10L*i;
-        }
-        else if (amt<=3276700L)
-        {
-          *p=OMAXGOLD;
-          i = (int) (amt/100);
-          amt = 100L*i;
-        }
-        else if (amt<=32767000L)
-        {
-          *p = OKGOLD;
-          i = (int) (amt/1000);
-          amt = 1000L*i;
-        }
-        else
-        {
-          *p = OKGOLD;
-          i = (int) (32767);
-          amt = 32767000L;
-        }
-        c[GOLD] -= amt;
-        Printf(" You drop %d gold piece%s.", (long) amt, plural(amt));
-
-        if (pitflag)
-        {
-          *p = OPIT;
-          Print("\nThe gold disappears down the pit.");
-        }
-        else
-        {
-          iarg[playerx][playery] = (short) i;
-        }
-        UpdateStatus();
-        dropflag = 1;
-        return;
+        print_header("How much gold do you drop? ");
+		set_input_type("number");
+		set_callback("drop_gold");
       }
       else
       {
         drop_object(i-'a');
-        return;
       }
     }
-  }
+}
+
+void drop_gold(long amt)
+{
+	int i;
+	int pitflag=0;
+	char *p;
+
+	p = &item[playerx][playery];
+
+    if (amt <= 0) return;
+
+    if (amt > c[GOLD])
+    {
+        Print("You don't have that much!");
+        return;
+    }
+
+    if (amt <= 32767)
+    {
+        *p=OGOLDPILE;
+        i = (int) amt;
+    }
+    else if (amt <= 327670L)
+    {
+        *p = ODGOLD;
+        i = (int) (amt/10);
+        amt = 10L*i;
+    }
+    else if (amt<=3276700L)
+    {
+        *p=OMAXGOLD;
+        i = (int) (amt/100);
+        amt = 100L*i;
+    }
+    else if (amt<=32767000L)
+    {
+        *p = OKGOLD;
+        i = (int) (amt/1000);
+        amt = 1000L*i;
+    }
+    else
+    {
+        *p = OKGOLD;
+        i = (int) (32767);
+        amt = 32767000L;
+    }
+    c[GOLD] -= amt;
+    Printf(" You drop %d gold piece%s.", (long) amt, plural(amt));
+
+    if (pitflag)
+    {
+        *p = OPIT;
+        Print("The gold disappears down the pit.");
+    }
+    else
+    {
+        iarg[playerx][playery] = (short) i;
+    }
+    UpdateStatus();
+    dropflag = 1;
 }
 
 /* =============================================================================
  * FUNCTION: readscr
  */
-void readscr (void)
+void readscr (int i)
 {
-  int i;
-
   while (1)
   {
-    if ((i = whatitem(USE_READ))==ESC)  return;
+    if (i==ESC)  return;
     if (i != '.')
     {
       if (i=='*')
@@ -544,6 +415,16 @@ void readscr (void)
       }
       else
       {
+        if (c[BLINDCOUNT])
+        {
+          Print("You can't read anything when you're blind!");
+          return;
+        }
+        if (c[TIMESTOP])
+        {
+          Printf("Nothing can be moved while time is stopped!");
+          return;
+        }
         if (iven[i-'a']==OSCROLL)
         {
           read_scroll(ivenarg[i-'a']);
@@ -561,7 +442,7 @@ void readscr (void)
           ydhi(i);
           return;
         }
-        Print("\nThere's nothing on it to read.");  return;
+        Print("There's nothing on it to read.");  return;
       }
     }
   }
@@ -570,14 +451,13 @@ void readscr (void)
 /* =============================================================================
  * FUNCTION: eatcookie
  */
-void eatcookie (void)
+void eatcookie (int i)
 {
-  int i;
   char *p;
 
   while (1)
   {
-    if ((i = whatitem(USE_EAT))==ESC)
+    if (i==ESC)
     {
       return;
     }
@@ -590,7 +470,12 @@ void eatcookie (void)
       }
       else if (iven[i-'a']==OCOOKIE)
       {
-        Print("\nThe cookie was delicious.");
+        if (c[TIMESTOP])
+        {
+          Printf("Nothing can be moved while time is stopped!");
+          return;
+        }
+        Print("The cookie was delicious.");
         iven[i-'a'] = ONOTHING;
         if (!c[BLINDCOUNT])
         {
@@ -598,7 +483,7 @@ void eatcookie (void)
 
           if (p != NULL)
           {
-            Print("  Inside you find a scrap of paper that says:\n");
+            Print("Inside you find a scrap of paper that says:");
             Print(p);
           }
         }
@@ -611,7 +496,7 @@ void eatcookie (void)
       }
       else
       {
-        Print("\nYou can't eat that!");
+        Print("You can't eat that!");
         return;
       }
     }
@@ -621,13 +506,11 @@ void eatcookie (void)
 /* =============================================================================
  * FUNCTION: quaff
  */
-void quaff (void)
+void quaff (int i)
 {
-  int i;
-
   while (1)
   {
-    if ((i = whatitem(USE_QUAFF)) == ESC)
+    if (i == ESC)
     {
       return;
     }
@@ -640,6 +523,11 @@ void quaff (void)
       }
       else if (iven[i-'a']==OPOTION)
       {
+        if (c[TIMESTOP])
+        {
+          Printf("Nothing can be moved while time is stopped!");
+          return;
+        }
         quaffpotion(ivenarg[i-'a']);
         iven[i-'a'] = ONOTHING;
         return;
@@ -651,7 +539,7 @@ void quaff (void)
       }
       else
       {
-        Print("\nYou wouldn't want to quaff that, would you? ");
+        Print("You wouldn't want to quaff that, would you? ");
         return;
       }
     }
@@ -661,7 +549,7 @@ void quaff (void)
 /* =============================================================================
  * FUNCTION: opendoor
  */
-void opendoor(void)
+void opendoor(ActionType direction)
 {
   int dx, dy;
 
@@ -673,14 +561,14 @@ void opendoor(void)
   /* can't move objects is time is stopped */
   if (c[TIMESTOP])
   {
-    Printf("\nNothing can be moved while time is stopped!");
+    Printf("Nothing can be moved while time is stopped!");
     return;
   }
 
   dx = playerx;
   dy = playery;
 
-  dirsub(&dx, &dy);
+  dirsub(&dx, &dy, direction);
 
   /* don't ask about items at player's location after trying to open a door */
   dropflag = 1;
@@ -689,28 +577,28 @@ void opendoor(void)
   {
   	if (c[BLINDCOUNT] == 0)
     {
-  	  Print("\nYou see no door there.");
+  	  Print("You see no door there.");
     }
     else
     {
-      Print("\nYou cannot feel any door there.");
+      Print("You cannot feel any door there.");
     }
   }
   else
   {
     if (item[dx][dy] == OOPENDOOR)
     {
-    	Print("\nThat door is already open.");
+    	Print("That door is already open.");
     }
     else if (item[dx][dy] != OCLOSEDDOOR)
     {
     	if (c[BLINDCOUNT] == 0)
       {
-  	    Print("\nYou see no door there.");
+  	    Print("You see no door there.");
       }
       else
       {
-        Print("\nYou cannot feel any door there.");
+        Print("You cannot feel any door there.");
       }
     }
     else
@@ -718,11 +606,11 @@ void opendoor(void)
       oopendoor(dx, dy);
       if (item[dx][dy] == OOPENDOOR)
       {
-      	Print("\nThe door opens.");
+      	Print("The door opens.");
       }
       else
       {
-        Print("\nThe door resists.");
+        Print("The door resists.");
       }
     }
   }
@@ -732,7 +620,7 @@ void opendoor(void)
 /* =============================================================================
  * FUNCTION: closedoor
  */
-void closedoor(void)
+void closedoor(ActionType direction)
 {
   int i;
   int dx, dy;
@@ -740,7 +628,7 @@ void closedoor(void)
   /* can't move objects is time is stopped */
   if (c[TIMESTOP])
   {
-    Printf("\nNothing can be moved while time is stopped!");
+    Printf("Nothing can be moved while time is stopped!");
     return;
   }
 
@@ -751,7 +639,7 @@ void closedoor(void)
     dx = playerx;
     dy = playery;
 
-    dirsub(&dx, &dy);
+    dirsub(&dx, &dy, direction);
 
     /* don't ask about items at player's location after trying to close a door */
     dropflag = 1;
@@ -760,35 +648,35 @@ void closedoor(void)
     {
       if (c[BLINDCOUNT] == 0)
       {
-  	  Print("\nYou see no door there.");
+  	  Print("You see no door there.");
       }
       else
       {
-        Print("\nYou cannot feel any door there.");
+        Print("You cannot feel any door there.");
       }
     }
     else
     {
       if (item[dx][dy] == OCLOSEDDOOR)
       {
-    	  Print("\nThat door is already closed.");
+    	  Print("That door is already closed.");
       }
       else if (item[dx][dy] != OOPENDOOR)
       {
     	  if (c[BLINDCOUNT] == 0)
         {
-          Print("\nYou see no door there.");
+          Print("You see no door there.");
         }
         else
         {
-          Print("\nYou cannot feel any door there.");
+          Print("You cannot feel any door there.");
         }
       }
       else
       {
         item[dx][dy] = OCLOSEDDOOR;
         iarg[dx][dy] = 0;            /* Clear traps on door */
-        Print("\nThe door closes.");
+        Print("The door closes.");
       }
     }
     
@@ -798,11 +686,11 @@ void closedoor(void)
     i = item[playerx][playery];
     if (i != OOPENDOOR)
     {
-      Print("\nThere is no open door here.");
+      Print("There is no open door here.");
       return;
     }
 
-    Print("\nThe door closes.");
+    Print("The door closes.");
     forget();
     item[playerx][playery]=OCLOSEDDOOR;
     iarg[playerx][playery]=0;
@@ -818,7 +706,7 @@ void openchest(void)
 {
   if (item[playerx][playery] != OCHEST)
   {
-    Print("\nThere isn't a chest to open here.");
+    Print("There isn't a chest to open here.");
   }
   else
   {
@@ -830,12 +718,9 @@ void openchest(void)
 /* =============================================================================
  * FUNCTION: quit
  */
-void quit (void)
+void quit (int i)
 {
-  int i;
-
   strcpy(lastmonst, "");
-  i = get_prompt_input("\n\nDo you really want to quit? (y)es, (n)o, (s)ave", "yns\033", 1);
   switch (i)
   {
     case 'y':
@@ -849,8 +734,8 @@ void quit (void)
 
     case 's':
       Print(" save.");
-      Print("\nSaving...");
-      savegame(savefilename);
+      Print("Saving...");
+      savegame();
       wizard=1;
       died(DIED_SUSPENDED, 0);
       break;
@@ -863,16 +748,13 @@ void quit (void)
 /* =============================================================================
  * FUNCTION: do_create
  */
-void do_create(void)
+void do_create(int t, int a, int b)
 {
-  int t, a;
   int Retry;
 
   do
   {
     Retry = 0;
-
-    t = get_prompt_input("\nType of item (Scroll/Potion/Monster/Other) : ", "SsPpMmOo\033", 1);
 
     switch(t)
     {
@@ -881,42 +763,29 @@ void do_create(void)
 
       case 's':
       case 'S':
-        Print(" Scroll Arg: ");
-        a=get_num_input((long)MAXSCROLL);
-        Printf("\ncreateitem(OSCROLL, %d)", a);
+        Printf("createitem(OSCROLL, %d)", a);
         createitem(playerx,playery,OSCROLL, a);
         dropflag=1;
         break;
 
       case 'p':
       case 'P':
-        Print(" Potion Arg: ");
-        a=get_num_input((long)MAXPOTION);
-        Printf("\ncreateitem(OPOTION, %d)", a);
+        Printf("createitem(OPOTION, %d)", a);
         createitem(playerx,playery,OPOTION, a);
         dropflag=1;
         break;
 
       case 'o':
       case 'O':
-        Print("\n\n");
-        Print("Item : ");
-        t=get_num_input(0);
-        Print("Arg : ");
-        a=get_num_input(0);
-        Printf("\ncreateitem(%d, %d)", t, a);
-        createitem(playerx,playery,t, a);
+        Printf("createitem(%d, %d)", a, b);
+        createitem(playerx,playery,a,b);
         dropflag=1;
         break;
 
       case 'm':
       case 'M':
-        Print("\n\n");
-        ClearToEOPage(1, 23);
-        Print("Monst : ");
-        t=get_num_input(0);
-        Printf("\ncreatemonster(%d)", t);
-        createmonster(t);
+        Printf("createmonster(%d)", a);
+        createmonster(a);
         dropflag=1;
         break;
 
@@ -925,4 +794,30 @@ void do_create(void)
         break;
     }
   } while (Retry);
+}
+
+void takeoff(int i)
+{
+	if (c[SHIELD] == i - 'a')
+	{
+		c[SHIELD] = -1;
+		Print("Your shield is off.");
+		recalc();
+		UpdateStatus();
+	}
+	else if (c[WEAR] == i - 'a')
+	{
+		c[WEAR] = -1;
+		Print("Your armor is off.");
+		recalc();
+		UpdateStatus();
+	}
+}
+
+void unwield()
+{
+	c[WIELD] = -1;
+	Print("You unwield your weapon.");
+	recalc();
+	UpdateStatus();
 }

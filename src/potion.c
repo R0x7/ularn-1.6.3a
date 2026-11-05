@@ -136,7 +136,7 @@ void quaffpotion(int pot)
   if (pot<0 || pot>=MAXPOTION) return;
 
   if (potionknown[pot] == 0) potionknown[pot] = 1;
-  Printf("\nYou drink a potion of %s.", &potionname[pot][1]);
+  Printf("You drink a potion of %s.", &potionname[pot][1]);
 
   /* 
    * In the switch, if no status/attr changes then use return, 
@@ -146,7 +146,7 @@ void quaffpotion(int pot)
   switch (pot)
   {
     case PSLEEP:
-      Print("\n  You fall asleep...");
+      Print("You fall asleep...");
       i=rnd(11)-(c[CONSTITUTION]>>2)+2;
       while(--i>0)
       {
@@ -154,11 +154,11 @@ void quaffpotion(int pot)
         nap(1000);
       }
 
-      Print("\n.. you wake up.");
+      Print(" you wake up.");
       return;
 
     case PHEALING:
-      Print("\n  You feel better.");
+      Print("You feel better.");
       if (c[HP] == c[HPMAX])
       {
         /* Already fully healed, so increase max hp */
@@ -171,24 +171,24 @@ void quaffpotion(int pot)
       break;
 
     case PRAISELEVEL:
-      Print("\n  You feel much more skillful!");
+      Print("You feel much more skillful!");
       raiselevel();
       raisemhp(1);
       break;
 
     case PINCABILITY:
-      Print("\n  You feel strange for a moment.");
+      Print("You feel strange for a moment.");
       i = ABILITY_FIRST + rund(ABILITY_COUNT);
       c[i]++;
       break;
 
     case PWISDOM:
-      Print("\n  You feel more self-confident!");
+      Print("You feel more self-confident!");
       c[WISDOM] += rnd(2);
       break;
 
     case PSTRENGTH:
-      Print("\n  Wow!  You feel great!");
+      Print("Wow!  You feel great!");
       if (c[STRENGTH]<12)
       {
         c[STRENGTH]=12;
@@ -200,22 +200,22 @@ void quaffpotion(int pot)
       break;
 
     case PCHARISMA:
-      Print("\n  You feel charismatic!");
+      Print("You feel charismatic!");
       c[CHARISMA]++;
       break;
 
     case PDIZZINESS:
-      Print("\n  You become dizzy!");
+      Print("You become dizzy!");
       if (--c[STRENGTH] < 3) c[STRENGTH]=3;
       break;
 
     case PLEARNING:
-      Print("\n  You feel clever!");
+      Print("You feel clever!");
       c[INTELLIGENCE]++;
       break;
 
     case PGOLDDET:
-      Print("\n  You feel greedy...");
+      Print("You feel greedy...");
       nap(2000);
 
       for (i=0; i<MAXY; i++)
@@ -245,7 +245,7 @@ void quaffpotion(int pot)
       return;
 
     case PFORGETFUL:
-      Print("\n  You stagger for a moment...");
+      Print("You stagger for a moment...");
 
       for (i=0; i<MAXY; i++)
       {
@@ -262,7 +262,7 @@ void quaffpotion(int pot)
       return;
 
     case PBLINDNESS:
-      Print("\n  You can't see anything!");
+      Print("You can't see anything!");
       c[BLINDCOUNT]+=250;  /* dang, that's a long time. */
       /* erase the character, too! */
 
@@ -270,12 +270,12 @@ void quaffpotion(int pot)
       return;
 
     case PCONFUSION:
-      Print("\n  You feel confused.");
+      Print("You feel confused.");
       c[CONFUSE]+= 20+rnd(9);
       return;
 
     case PHEROISM:
-      Print("\n  WOW!  You feel fantastic!");
+      Print("WOW!  You feel fantastic!");
       if (c[HERO]==0)
       {
         for (i = ABILITY_FIRST ; i <= ABILITY_LAST ; i++)
@@ -287,23 +287,23 @@ void quaffpotion(int pot)
       break;
 
     case PSTURDINESS:
-      Print("\n  You feel healthier!");
+      Print("You feel healthier!");
       c[CONSTITUTION]++;
       break;
 
     case PGIANTSTR:
-      Print("\n  You now have incredible bulging muscles!");
+      Print("You now have incredible bulging muscles!");
       if (c[GIANTSTR]==0) c[STREXTRA] += PGIANTSTR_BOOST;
       c[GIANTSTR] += 700;
       break;
 
     case PFIRERESIST:
-      Print("\n  You feel a chill run up your spine!");
+      Print("You feel a chill run up your spine!");
       c[FIRERESISTANCE] += 1000;
       break;
 
     case PTREASURE:
-      Print("\n  You feel greedy...");
+      Print("You feel greedy...");
       nap(2000);
       for (i=0; i<MAXY; i++)
       {
@@ -327,16 +327,16 @@ void quaffpotion(int pot)
       break;
 
     case PCUREDIANTH:
-      Print("\n  You don't seem to be affected.");
+      Print("You don't seem to be affected.");
       return;
 
     case PPOISON:
-      Print("\n  You feel a sickness engulf you!");
+      Print("You feel a sickness engulf you!");
       c[HALFDAM] += 200 + rnd(200);
       return;
 
     case PSEEINVIS:
-      Print("\n  You feel your vision sharpen.");
+      Print("You feel your vision sharpen.");
       c[SEEINVISIBLE] += rnd(1000)+400;
       monstnamelist[INVISIBLESTALKER] = 'I';
       return;

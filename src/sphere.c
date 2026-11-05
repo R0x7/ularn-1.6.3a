@@ -130,7 +130,7 @@ static void sphboom (int x, int y)
       else
       {
         /* The monster has the talisman, and is unaffected */
-        Printf("\nThe %s is unaffected by the blast!",
+        Printf("The %s is unaffected by the blast!",
                monster[(int) mitem[j][i].mon].name);
       }
 
@@ -140,7 +140,7 @@ static void sphboom (int x, int y)
       {
         /* player killed in explosion */
         UlarnBeep();
-        Print("\nYou were too close to the sphere!");
+        Print("You were too close to the sphere!");
         nap(3000);
         died(DIED_SPHERE_ANNIHILATION, 0);
       }
@@ -267,7 +267,7 @@ int msphere(struct sphere *sp, int create)
     know[x][y] = item[x][y];
     /* show the demon (ha ha) */
     show1cell(x, y);
-    Printf("\nThe %s dispels the sphere!", monster[m].name);
+    Printf("The %s dispels the sphere!", monster[m].name);
     UlarnBeep();
 
     /* remove any spheres that are here */
@@ -279,7 +279,7 @@ int msphere(struct sphere *sp, int create)
   /* disenchantress cancels spheres if the player doesn't have the talisman */
   if ((!have_talisman) && (m == DISENCHANTRESS))
   {
-    Printf("\nThe %s cancels the sphere!", monster[m].name);
+    Printf("The %s cancels the sphere!", monster[m].name);
     UlarnBeep();
 
     sphboom(x, y);  /* blow up stuff around sphere */
@@ -291,7 +291,7 @@ int msphere(struct sphere *sp, int create)
   /* cancellation cancels spheres if the player doesn't have the talisman */
   if ((!have_talisman) && c[CANCELLATION])
   {
-    Print("\nAs the cancellation takes effect, you hear a great earth shaking blast!");
+    Print("As the cancellation takes effect, you hear a great earth shaking blast!");
     UlarnBeep();
 
     sphboom(x, y);  /* blow up stuff around sphere */
@@ -306,7 +306,7 @@ int msphere(struct sphere *sp, int create)
    */
   if ((!have_talisman) && (playerx == x) && (playery == y))
   {
-    Print("\nYou have been enveloped by the zone of nothingness!\n");
+    Print("You have been enveloped by the zone of nothingness!");
     UlarnBeep();
     rmsphere(x, y); /* remove any spheres that are here */
 
@@ -318,7 +318,7 @@ int msphere(struct sphere *sp, int create)
   /* collision of spheres detonates spheres */
   if (item[x][y] == OANNIHILATION)
   {
-    Print("\nTwo spheres of annihilation collide! You hear a great earth-shaking blast!");
+    Print("Two spheres of annihilation collide! You hear a great earth-shaking blast!");
     UlarnBeep();
     rmsphere(x, y);
 
@@ -354,7 +354,7 @@ int msphere(struct sphere *sp, int create)
   
   if (mon_has_talisman)
   {
-    Printf("\nThe %s is unaffected by the sphere of annihilation!", monster[m].name);
+    Printf("The %s is unaffected by the sphere of annihilation!", monster[m].name);
   }
   else
   {
@@ -555,7 +555,7 @@ void free_spheres(void)
 /* =============================================================================
  * FUNCTION: write_spheres
  */
-void write_spheres(FILE *fp)
+void write_spheres(MemoryFile *fp)
 {
   int count;
   struct sphere *sp;
@@ -583,7 +583,7 @@ void write_spheres(FILE *fp)
 /* =============================================================================
  * FUNCTION: read_spheres
  */
-void read_spheres(FILE *fp)
+void read_spheres(MemoryFile *fp)
 {
   int count;
   struct sphere *sp;

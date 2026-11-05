@@ -34,6 +34,7 @@
 #define __STORE_H
 
 #include "itm.h"
+#include "MemoryFile.h"
 
 /* the tax rate for the LRS = 5%  */
 #define TAXRATE (0.05)
@@ -216,7 +217,7 @@ void ohome(void);
  *
  *   None.
  */
-void write_store(FILE *fp);
+void write_store(MemoryFile *fp);
 
 /* =============================================================================
  * FUNCTION: read_store
@@ -232,6 +233,6 @@ void write_store(FILE *fp);
  *
  *   None.
  */
-void read_store(FILE *fp);
+void read_store(MemoryFile *fp);
 
 #endif

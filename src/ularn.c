@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 #include "patchlevel.h"
 
@@ -45,10 +48,6 @@
 #include "help.h"
 #include "diag.h"
 #include "itm.h"
-
-#ifdef WINDOWS
-#include <windows.h>
-#endif
 
 /* =============================================================================
  * Local variables
@@ -81,76 +80,6 @@ static short viewflag;
  * Local functions
  */
 
-#ifdef WINDOWS
-
-/*
- * Windows programs don't use standard command line arguments, so provide
- * a function to convert the windows command line to argc, argv.
- */
-
-/* =============================================================================
- * FUNCTION: _get_cmd_arg
- *
- * DESCRIPTION:
- * Function to help process the windows command line into argc, argv
- * format.
- *
- * PARAMETERS:
- *
- *   pCmdLine : The command line.
- *
- * RETURN VALUE:
- *
- *   The next word on the command line.
- */
-static char* _get_cmd_arg(char* pCmdLine)
-{
-  static char* pArgs = NULL;
-  char  *pRetArg;
-
-  if ((pCmdLine == NULL) && (pArgs == NULL)) return NULL;
-  if (pArgs == NULL) pArgs = pCmdLine;
-
-  /* skip whitespace */
-  for (pRetArg = pArgs ; (*pRetArg != 0) && isspace(*pRetArg) ; pRetArg++);
-  {
-    if(*pRetArg == 0)
-    {
-      /* Hit end of string, so return */
-      pArgs = NULL;
-      return NULL;
-    }
-  }
-
-  /* check for quote */
-  if( *pRetArg == '"' )
-  {
-    pRetArg++;
-    pArgs = strchr(pRetArg, '"');
-  }
-  else
-  {
-    /* skip to whitespace */
-    for(pArgs = pRetArg ; (*pArgs != 0) && !isspace(*pArgs); pArgs++);
-  }
-
-  if ((pArgs != NULL) && (*pArgs != 0) )
-  {
-    char* p;
-    p = pArgs;
-    pArgs++;
-    *p = 0;
-  }
-  else
-  {
-    pArgs = NULL;
-  }
-
-  return pRetArg;
-}
-
-#endif
-
 /* =============================================================================
  * FUNCTION: ULarnSetup
  *
@@ -159,54 +88,35 @@ static char* _get_cmd_arg(char* pCmdLine)
  *
  * PARAMETERS:
  *
- *   argc : The command line argumant count
- *
- *   argv : The command line arguments.
+ *   None.
  *
  * RETURN VALUE:
  *
  *   None.
  */
-void ULarnSetup(int argc, char *argv[])
+//extern int scoreboardExists();
+
+int difficulty = 0;
+
+void set_difficulty(int diff)
 {
-  int i;
-  int hard;
+    difficulty = diff;
+}
+
+int get_difficulty()
+{
+    return c[HARDGAME];
+}
+
+void ULarnSetup(char character_class)
+{
   int restore_ckp;
-  int set_optfile;
-  int reset_scores;
-  int show_scores;
-  char buf[BUFSIZ];
-  char *home;
 
   /* clear the loginname and logname */
   loginname[0] = 0;
   logname[0] = 0;
 
-  set_display(DISPLAY_TEXT);
-  ClearText();
-
   nap(100);
-
-#ifdef UNIX
-
-  home = getenv("HOME");
-
-#else
-
-#ifdef AMIGA_WIN
-
-  home = "";
-
-#else
-
-  home = ".";
-
-#endif
-
-#endif
-
-  /* set the save directory to the home directory by default */
-  strcpy(savedir, home);
 
   /* initialize dungeon storage */
 
@@ -214,167 +124,19 @@ void ULarnSetup(int argc, char *argv[])
 
   /* set the initial clock and initialise the random number generator*/
   newgame();
-  hard = -1;
   restore_ckp = 0;
-  set_optfile = 0;
-  reset_scores = 0;
-  show_scores = 0;
-
-  /*
-   * now process the command line arguments
-   */
-  opterr = 0;
-  while ((i = ugetopt(argc, argv, optstring)) != -1)
-  {
-    switch (i)
-    {
-      case 's':
-        show_scores = 1;
-        break;
-
-      case 'i':
-        show_scores = 2;
-        break;
-
-      case 'c':
-        reset_scores = 1;
-        break;
-
-      case 'n':
-        nowelcome = 1;
-        break;
-
-      case 'd':
-        /* specify hardness */
-        hard = atoi(optarg);
-        if (hard > 100) hard = 100;
-        if (hard < 0)
-        {
-          Printf("Difficulty level must be > 0\n");
-          Print(cmdhelp);
-          get_prompt_input("\n\nPress space to exit", " ", 0);
-
-	      endgame();
-        }
-        break;
-
-      case 'h':
-      case '?':
-        /* print out command line arguments */
-        Printf("%s", copyright);
-        Printf("\n\n  Version %s.%s (%s)", LARN_VERSION, LARN_PATCHLEVEL, LARN_DATE);
-        Printf("\n\n%s", cmdhelp);
-        get_prompt_input("\n\nPress space to exit", " ", 0);
-
-	endgame();
-	break;
-
-      case 'o':
-        /* specify a Ularn.opt filename */
-        strcpy(optsfile, optarg);
-        set_optfile = 1;
-        break;
-
-      case 'r':
-        /* restore checkpointed game */
-        restore_ckp = 1;
-        break;
-
-      default:
-        if (!opterr)
-        {
-          Printf("Unknown option <%s>\n",
-          argv[optind-1]);
-        }
-        Printf("%s\n", copyright);
-        Printf("Version %s.%s (%s)\n", LARN_VERSION, LARN_PATCHLEVEL, LARN_DATE);
-        Printf("%s", cmdhelp);
-	    get_prompt_input("\n\nPress space to exit", " ", 0);
-
-        endgame();
-
-	break;
-
-    } /* end switch */
-  } /* end while */
-
-
-  /* Options filename was not specified on the command line, so set default */
-  if (!set_optfile)
-  {
-    sprintf(buf, "%s/%s", home, optsfile);
-    strcpy(optsfile, buf);
-  }
-
-  /* read the options file if there is one */
-  read_options();
-
-  /*
-   * Process scorefile initialisation
-   */
-
-  /* the Ularn scoreboard filename */
-  sprintf(scorefile, "%s/%s", libdir, SCORENAME);
-
-  if (reset_scores)
-  {
-    /* anyone with password can create scoreboard */
-    Print("Preparing to initialize the scoreboard.\n");
-    if (getpassword() != 0)
-    {
-      if (makeboard() == -1)
-      {
-        Print("Scoreboard creation failed!!\n");
-        endgame();
-      }
-      showscores();
-      Print("\nScoreboard initialized.\n");
-    }
-    endgame();
-  }
-
-  if (show_scores == 1)
-  {
-    showscores();
-    endgame();
-  }
-  else if (show_scores == 2)
-  {
-    showallscores();
-    endgame();
-  }
 
   /* now make scoreboard if it is not there (don't clear) */
-  if (access(scorefile, 0) == -1)
+  if (/*!scoreboardExists()*/1)
   {
     /* score file not there */
     if (makeboard() == -1)
     {
-      Printf("I can't create the scoreboard.\n");
+      Printf("I can't create the scoreboard.");
       Printf("Check permissions on %s\n", libdir);
       endgame();
     }
   }
-
-  /*
-   * Get the user name and id.
-   * For OS without usernames, use the logname, if it is specified.
-   */
-  strcpy(loginname, logname);
-  GetUser(loginname, &userid);
-
-  if (logname[0] == 0)
-  {
-    /* no logname specified, so use loginname */
-    strcpy(logname, loginname);
-  }
-
-  /*
-   * Set the file names
-   */
-
-  /* the Ularn on-line help file */
-  sprintf(helpfile, "%s/%s", libdir, HELPNAME);
 
   /* the pre-made cave level data file */
   sprintf(larnlevels, "%s/%s", libdir, LEVELSNAME);
@@ -382,42 +144,16 @@ void ULarnSetup(int argc, char *argv[])
   /* the fortune data file name */
   sprintf(fortfile, "%s/%s", libdir, FORTSNAME);
 
-  /* save file name in home directory */
-  sprintf(savefilename, "%s/ularn_%s.sav", savedir, loginname);
-
-  /* the checkpoint file */
-  sprintf(ckpfile, "%s/ularn_%s.ckp", home, loginname);
-
-  if (restore_ckp)
-  {
-    if (access(ckpfile, 0) == -1)
-    {
-      Printf("Cannot find checkpoint file %s\n", ckpfile);
-      endgame();
-    }
-    Printf("Restoring...");
-    restorflag = 1;
-    hitflag = 1;
-    restoregame(ckpfile);
-  }
-
-  /* restore game if need to, and haven't restored ckpfile */
-  if (!restorflag && (access(savefilename, 0) == 0))
-  {
-    restorflag = 1;
-    hitflag = 1;
-    Print("Restoring...");
-    restoregame(savefilename);
-  }
-
   /* create new game */
-  if (restorflag == 0)
+  if (restorflag == 0 && character_class != 0)
   {
     /* make the character that will play */
+    char_picked = character_class;
+    wizard = 0;
     makeplayer();
     /* make the dungeon */
     newcavelevel(0);
-
+    
     if (nowelcome == 0)
     {
       /* welcome the player to the game */
@@ -426,15 +162,18 @@ void ULarnSetup(int argc, char *argv[])
   }
 
   /* set up the desired difficulty  */
-  sethard(hard);
-
-  set_display(DISPLAY_MAP);
+  sethard(difficulty);
 
   showplayer();
 
   yrepcount = 0;
   hit2flag = 0;
 
+#ifdef __EMSCRIPTEN__
+  EM_ASM(
+    showGame();
+  );
+#endif
 }
 
 /* =============================================================================
@@ -539,61 +278,28 @@ void parse (ActionType Action)
       nomove = 1;
       return;
 
-    case ACTION_WIELD:
-      yrepcount=0;
-      wield();
-      return;
-
-    case ACTION_WEAR:
-      yrepcount=0;
-      wear();
-      return;
-
-    case ACTION_READ:
-      yrepcount=0;
-      if (c[BLINDCOUNT])
-      {
-        Print("\nYou can't read anything when you're blind!");
-      }
-      else if (c[TIMESTOP]==0)
-      {
-        readscr();
-      }
-      return;
-
-    case ACTION_QUAFF:
-      yrepcount=0;
-      if (c[TIMESTOP]==0)
-      {
-        quaff();
-      }
-      return;
-
-    case ACTION_DROP:
-      yrepcount=0;
-      if (c[TIMESTOP]==0)
-      {
-        dropobj();
-      }
-      return;
-
     case ACTION_CAST_SPELL:
       yrepcount=0;
-      cast();
-      return;
-
-    case ACTION_OPEN_DOOR:
-    	yrepcount = 0;
-      opendoor();
-      return;
-
-    case ACTION_CLOSE_DOOR:
-      yrepcount=0;
-      closedoor();
+  	  j = 0;
+	  for (i = 0; i < SPELL_COUNT; i++)
+	  {
+		if (spelknow[i])
+		{
+			add_option(i, spelname[i], "");
+			j++;
+		}
+	  }
+	  if (j > 0)
+      {
+        add_option(-1, "Back", "");
+	  	set_callback("cast");
+      }
+	  else
+		Print("You don't know any spells.");
       return;
 
     case ACTION_OPEN_CHEST:
-    	yrepcount=0;
+      yrepcount=0;
       openchest();
       return;
 
@@ -601,14 +307,6 @@ void parse (ActionType Action)
       yrepcount=0;
       nomove=1;
       showstr();
-      return;
-
-    case ACTION_EAT_COOKIE:
-      yrepcount=0;
-      if (c[TIMESTOP]==0)
-      {
-        eatcookie();
-      }
       return;
 
     case ACTION_LIST_SPELLS:
@@ -624,12 +322,11 @@ void parse (ActionType Action)
       return;
 
     case ACTION_SAVE:
-      ClearText();
       Print("Saving . . .");
 
-      if (savegame(savefilename) == -1)
+      if (savegame() == NULL)
       {
-        Print("\nSave game failed.\n");
+        Print("Save game failed.");
       }
       wizard=1;   /* so not show scores */
       died(DIED_SUSPENDED, 0);
@@ -639,22 +336,8 @@ void parse (ActionType Action)
       yrepcount=0;
       if (wizard)
       {
-        int t;
-
-        Print("\nWhich level do you wish to teleport to? ");
-        t = (int) get_num_input(20);
-        if (t > VBOTTOM || t < 0)
-        {
-          Print(" sorry!");
-          return;
-        }
-
-        playerx = (char) rnd(MAXX-2);
-        playery = (char) rnd(MAXY-2);
-        newcavelevel(t);
-        positionplayer();
-        draws(0, MAXX, 0, MAXY);
-        UpdateStatusAndEffects();
+		set_input_type("number");
+		set_callback("action_teleport");
         return;
       }
       if (c[LEVEL] >= INNATE_TELEPORT_LEVEL)
@@ -663,13 +346,13 @@ void parse (ActionType Action)
         return;
       }
 
-      Print("\nYou don't know how to teleport yet.");
+      Print("You don't know how to teleport yet.");
       return;
 
     case ACTION_IDENTIFY_TRAPS:
       flag=0;
       yrepcount=0;
-      Printc('\n');
+
       for (j=playery-1; j<playery+2; j++)
       {
         if (j < 0) j=0;
@@ -686,26 +369,19 @@ void parse (ActionType Action)
             case OTELEPORTER:
             case OELEVATORUP:
             case OELEVATORDOWN:
-              Print("\nIt's ");
+              Print("It's ");
               Print(objectname[(int) item[i][j]]);
               flag++;
           }
         }
       }
       if (flag==0)
-        Print("\nNo traps are visible.");
+        Print("No traps are visible.");
       return;
 
     case ACTION_BECOME_CREATOR:
       yrepcount=0;
       nomove=1;
-      if (!wizard)
-      {
-        if (getpassword()==0)
-        {
-         return;
-        }
-      }
 
       raiseexperience(370 * 1000000);
 
@@ -714,32 +390,17 @@ void parse (ActionType Action)
       drawscreen();
       return;
 
-    case ACTION_CREATE_ITEM:
-      yrepcount=0;
-      if (wizard)
-      {
-        do_create();
-      }
-      return;
-
     case ACTION_TOGGLE_WIZARD:
       yrepcount=0;
       nomove=1;
       if (wizard)
       {
-        Print("\nYou are no longer a wizard.");
+        Print("You are no longer a wizard.");
         wizard = 0;
         return;
       }
-      if (getpassword())
-      {
-        Print("\nYou are now a wizard.");
-        wizard = 1;
-      }
-      else
-      {
-        Print("Sorry.\n");
-      }
+      Print("You are now a wizard.");
+      wizard = 1;
       return;
 
     case ACTION_DEBUG_MODE:
@@ -747,10 +408,6 @@ void parse (ActionType Action)
       nomove=1;
       if (!wizard)
       {
-        if (getpassword()==0)
-        {
-            return;
-        }
         wizard=1;
       }
 
@@ -843,7 +500,7 @@ void parse (ActionType Action)
       if (c[SHIELD] != -1)
       {
         c[SHIELD] = -1;
-        Print("\nYour shield is off.");
+        Print("Your shield is off.");
         recalc();
         UpdateStatus();
       }
@@ -852,19 +509,19 @@ void parse (ActionType Action)
         if (c[WEAR] != -1)
         {
           c[WEAR] = -1;
-          Print("\nYour armor is off.");
+          Print("Your armor is off.");
           recalc();
           UpdateStatus();
         }
         else
         {
-          Print("\nYou aren't wearing anything.");
+          Print("You aren't wearing anything.");
         }
       }
       return;
 
     case ACTION_PACK_WEIGHT:
-      Printf("\nThe stuff you are carrying presently weighs %d pound%s.",
+      Printf("The stuff you are carrying presently weighs %d pound%s.",
               (long) packweight(),
               plural(packweight()));
       nomove=1;
@@ -873,7 +530,7 @@ void parse (ActionType Action)
 
     case ACTION_VERSION:
       yrepcount=0;
-      Printf("\nThe Addiction of Ularn -- Version %s.%s (%s)\nDifficulty level %d",
+      Printf("The Addiction of Ularn -- Version %s.%s (%s)\nDifficulty level %d",
               LARN_VERSION,
               LARN_PATCHLEVEL,
               LARN_DATE,
@@ -882,12 +539,6 @@ void parse (ActionType Action)
       nomove=1;
       if (cheat) Print(" (Cheater)");
       Print(copyright);
-      return;
-
-    case ACTION_QUIT:
-      yrepcount=0;
-      quit();
-      nomove=1;
       return;
 
     case ACTION_REDRAW_SCREEN:
@@ -899,183 +550,42 @@ void parse (ActionType Action)
     case ACTION_SHOW_TAX:
       if (outstanding_taxes>0)
       {
-        Printf("\nYou presently owe %d gp in taxes.", (long)outstanding_taxes);
+        Printf("You presently owe %d gp in taxes.", (long)outstanding_taxes);
       }
       else
       {
-        Print("\nYou do not owe any taxes.");
+        Print("You do not owe any taxes.");
       }
       return;
 
     default:
-      Print("HELP! unknown command\n");
+      Print("HELP! unknown command");
       break;
   }
 }
 
-#ifdef WINDOWS
-
-/* windows uses WinMain instead of main */
-
-/* =============================================================================
- * FUNCTION: WinMain
- *
- * DESCRIPTION:
- * Windows main entry point.
- *
- * PARAMETERS:
- *
- *   hinstance     : This isntance of the application
- *
- *   hprevinstance : The previous instance of the application (if any)
- *
- *   lpcmdline     : The command line
- *
- *   ncmdshow      : The initial state for the application window
- *
- * RETURN VALUE:
- *
- *   Exit status of the application.
- *     0 => normal exit.
- */
-int WINAPI WinMain(
-  HINSTANCE hinstance,
-  HINSTANCE hprevinstance,
-  LPSTR lpcmdline,
-  int ncmdshow)
-
-#else
-
-/* =============================================================================
- * FUNCTION: main
- *
- * DESCRIPTION:
- * Main entry point.
- *
- * PARAMETERS:
- *
- *   argc : Command line argument count
- *
- *   argv : Command line argument strings
- *
- * RETURN VALUE:
- *
- *   Exit status of the application.
- *     0 => normal exit.
- */
-int main(int argc, char *argv[])
-
-#endif
-
+void action_teleport(int t)
 {
-  ActionType Action;
-
-#ifdef WINDOWS
-
-  int argc;
-  char* argv[MAX_CMDLINE_PARAM];
-  TCHAR *p;
-  TCHAR wbuf[BUFSZ];
-  char buf[BUFSZ];
-  size_t len;
-
-#endif
-
-#ifdef AMIGA_WIN
-  int StartedFromWB = 0;
-  char *fake_argv[1] = { "ularn" };
-#endif
-
-
-#ifdef UNIX_X11
-
-  init_app(getenv("DISPLAY"));
-
-#else
-
-#ifdef WINDOWS
-
-  /*
-   * get command line parameters
-   */
-  p = _get_cmd_arg(GetCommandLine());
-  p = _get_cmd_arg(NULL); /* skip first paramter - command name */
-  for (argc = 1; p && argc < MAX_CMDLINE_PARAM ; argc++ )
-  {
-    len = strlen(p);
-    if( len>0 )
+    if (t > VBOTTOM || t < 0)
     {
-      argv[argc] = strdup(p);
-    }
-    else
-    {
-      argv[argc] = "";
+        Print(" sorry!");
+        return;
     }
 
-    p = _get_cmd_arg(NULL);
-  }
-  GetModuleFileName(NULL, wbuf, BUFSZ);
-  argv[0] = strdup(strncpy(wbuf, buf, BUFSZ));
+    playerx = (char) rnd(MAXX-2);
+    playery = (char) rnd(MAXY-2);
+    newcavelevel(t);
+    positionplayer();
+    draws(0, MAXX, 0, MAXY);
+    UpdateStatusAndEffects();
+}
 
-  //
-  // Setup the display interface
-  //
-
-  if (!init_app(hinstance))
-  {
-    return(0);
-  }
-
-#else
-
-#ifdef AMIGA_WIN
-
-  /* The Amiga sets argc to 0 if the program was started from Workbench
-   * In this case the arg list points to a WBStartup structure instead
-   * of and array of arguments.
-   */
-  if (argc == 0)
-  {
-    StartedFromWB = 1;
-  }
-
-  if (!init_app())
-  {
-    close_app();
-    return(0);
-  }
-
-#else
-
-  init_app();
-
-#endif
-
-#endif
-
-#endif
-
-#ifdef AMIGA_WIN
-
-  if (!StartedFromWB)
-  {
-    ULarnSetup(argc, argv);
-  }
-  else
-  {
-    /* fake parameters */
-    ULarnSetup(1, fake_argv);
-  }
-
-#else
-
-  ULarnSetup(argc, argv);
-
-#endif
-
-  /* Everything should be common from here on */
-
-  do
+void move_world(int check_for_object)
+{
+  if (nomove || get_callback()[0] != 0)
+    return;
+    
+  if (check_for_object)
   {
     if (dropflag==0)
     {
@@ -1085,57 +595,48 @@ int main(int argc, char *argv[])
     {
       dropflag=0;      /* don't show it just dropped an item */
     }
+  
+    if (get_callback()[0] != 0)
+      return;
+  }
 
-    if (hitflag == 0)
+  /* regenerate hp and spells */
+  regen();
+
+  if (c[TIMESTOP]==0)
+  {
+    rmst--;
+    if (rmst <= 0)
     {
-      if (c[HASTEMONST]) movemonst();
-
-      movemonst();
+      rmst = (char) (120-(level<<2));
+      fillmonst(makemonst(level));
     }
+  }
 
-    if (viewflag==0)
-    {
-      showcell(playerx, playery);
-    }
-    else
-    {
-      viewflag = 0; /* show stuff around player */
-    }
+  if (hitflag == 0)
+  {
+    if (c[HASTEMONST]) movemonst();
 
-    hitflag = 0;
-    hit3flag = 0;
+     movemonst();
+  }
 
-    nomove = 1;
+  if (viewflag==0)
+  {
+    showcell(playerx, playery);
+  }
+  else
+  {
+    viewflag = 0; /* show stuff around player */
+  }
 
-    /*  get commands and make moves */
-    while (nomove)
-    {
-      nomove = 0;
-      Action = get_normal_input();
-      parse(Action);  /* may reset nomove=1 */
-    }
+  hitflag = 0;
+  hit3flag = 0;
+}
 
-    /* regenerate hp and spells */
-    regen();
-
-    if (c[TIMESTOP]==0)
-    {
-      rmst--;
-      if (rmst <= 0)
-      {
-        rmst = (char) (120-(level<<2));
-        fillmonst(makemonst(level));
-      }
-    }
-
-  } while (Action != ACTION_QUIT);
-
-  /*
-   * tidyup and exit
-   */
-  endgame();
-
-  /* not actually reachable */
-  return (0);
-
+int act(ActionType Action)
+{
+  nomove = 0;
+  parse(Action);
+  move_world(1);
+  return !nomove;
 }

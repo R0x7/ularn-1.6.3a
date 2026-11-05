@@ -69,7 +69,7 @@ void oopendoor(int x, int y);
  *
  *   None.
  */
-void oaltar(void);
+void oaltar(int ans);
 
 /* =============================================================================
  * FUNCTION: othrone
@@ -94,7 +94,7 @@ void oaltar(void);
  *
  *   None.
  */
-void othrone(int arg);
+void othrone(int arg, int ans);
 
 /* =============================================================================
  * FUNCTION: odeadthrone
@@ -111,7 +111,7 @@ void othrone(int arg);
  *
  *   None.
  */
-void odeadthrone(void);
+void odeadthrone(int ans);
 
 /* =============================================================================
  * FUNCTION: ofountain
@@ -128,7 +128,7 @@ void odeadthrone(void);
  *
  *   None.
  */
-void ofountain(void);
+void ofountain(int ans);
 
 /* =============================================================================
  * FUNCTION: ostairs
@@ -148,7 +148,7 @@ void ofountain(void);
  *
  *   None.
  */
-void ostairs(int dir);
+void ostairs(int dir, int ans);
 
 /* =============================================================================
  * FUNCTION: oteleport

@@ -1,4 +1,15 @@
 ===============================================================================
+webport-core branch (2026)
+===============================================================================
+
+Replaced src/ and data/ with the C sources and lib/ files from
+davidpeng/ularn (ularn_src_1_6_3a at commit 0f35290). Dropped the
+compiled ..webularn.js. Line endings normalised to LF, build.sh/build.bat
+now embed ../data as lib, and the Emscripten include and EM_ASM call in
+ularn.c are wrapped in #ifdef __EMSCRIPTEN__. No other source changes.
+
+
+===============================================================================
 Repository import (2026)
 ===============================================================================
 

@@ -38,7 +38,7 @@
  * movemonst     : Move monsters.
  * parse2        : Function to call when player is not to move, but monsters are
  * write_monster_data : Function to write the monster data to the save file
- * read_monster_data  : Function to read the monster data from the save file
+ * read_m#include "MemoryFile.h"onster_data  : Function to read the monster data from the save file
  *
  * =============================================================================
  */
@@ -356,23 +356,23 @@ static char *rust_armour(void)
     switch (ArmourId)
     {
       case OLEATHER:
-        p = "\nThe %s hit you -- you are lucky you have leather on.";
+        p = "The %s hit you -- you are lucky you have leather on.";
         break;
       case OSSPLATE:
-        p = "\nThe %s hit you -- you are fortunate to have stainless steel armor!";
+        p = "The %s hit you -- you are fortunate to have stainless steel armor!";
         break;
       case OELVENCHAIN:
-        p = "\nThe %s hit you -- you are very lucky to have such strong elven chain!";
+        p = "The %s hit you -- you are very lucky to have such strong elven chain!";
         break;
       default:
-        p = "\nThe %s hit you.";
+        p = "The %s hit you.";
         break;
     }
   }
   else
   {
     UlarnBeep();
-    p = "\nThe %s hit you -- your armor feels weaker.";
+    p = "The %s hit you -- your armor feels weaker.";
   }
 
   return p;
@@ -486,11 +486,11 @@ static int spattack(int x, int xx, int yy)
       i = rnd(15) + 8 - c[AC];
       if (c[FIRERESISTANCE])
       {
-        p = "\nThe %s's flame doesn't faze you!";
+        p = "The %s's flame doesn't faze you!";
       }
       else
       {
-        p = "\nThe %s breathes fire at you!";
+        p = "The %s breathes fire at you!";
         need_beep = 1;
       }
       checkloss(i);
@@ -501,11 +501,11 @@ static int spattack(int x, int xx, int yy)
 
       if (c[FIRERESISTANCE])
       {
-        p = "\nThe %s's flame doesn't faze you!";
+        p = "The %s's flame doesn't faze you!";
       }
       else
       {
-        p = "\nThe %s breathes fire at you!";
+        p = "The %s breathes fire at you!";
         need_beep = 1;
       }
       checkloss(i);
@@ -514,18 +514,18 @@ static int spattack(int x, int xx, int yy)
     case 4:
       if (c[STRENGTH] > 3)
       {
-        p = "\nThe %s stung you!  You feel weaker.";
+        p = "The %s stung you!  You feel weaker.";
         need_beep = 1;
         adjust_ability(STRENGTH, -1);
       }
       else
       {
-        p = "\nThe %s stung you!";
+        p = "The %s stung you!";
       }
       break;
 
     case 5:
-      p = "\nThe %s blasts you with his cold breath.";
+      p = "The %s blasts you with his cold breath.";
       i = rnd(15) + 18 - c[AC];
       need_beep = 1;
       checkloss(i);
@@ -538,7 +538,7 @@ static int spattack(int x, int xx, int yy)
         return 0;
       }
       
-      p = "\nThe %s drains you of your life energy!";
+      p = "The %s drains you of your life energy!";
       loselevel();
       if (monst == DEMONPRINCE) losemspells(1);
       if (monst == LUCIFER)
@@ -554,7 +554,7 @@ static int spattack(int x, int xx, int yy)
       break;
 
     case 7:
-      p = "\nThe %s got you with a gusher!";
+      p = "The %s got you with a gusher!";
       i = rnd(15) + 25 - c[AC];
       need_beep = 1;
       checkloss(i);
@@ -566,7 +566,7 @@ static int spattack(int x, int xx, int yy)
 
       if (c[GOLD])
       {
-        p = "\nThe %s hit you.  Your purse feels lighter.";
+        p = "The %s hit you.  Your purse feels lighter.";
         if (c[GOLD] > 32767)
         {
           c[GOLD] >>= 1;
@@ -583,7 +583,7 @@ static int spattack(int x, int xx, int yy)
       }
       else
       {
-        p = "\nThe %s couldn't find any gold to steal.";
+        p = "The %s couldn't find any gold to steal.";
       }
       disappear(xx, yy);
       need_beep = 1;
@@ -608,7 +608,7 @@ static int spattack(int x, int xx, int yy)
 
           adjustivenarg(i, -Disenchant);
 
-          p = "\nThe %s hits you with a spell of disenchantment! ";
+          p = "The %s hits you with a spell of disenchantment! ";
 
           need_beep = 1;
           show3(i);
@@ -624,12 +624,12 @@ static int spattack(int x, int xx, int yy)
        */
       if (!Disenchant)
       {
-        p = "\nThe %s nearly misses.";
+        p = "The %s nearly misses.";
       }
       break;
 
     case 10:
-      p = "\nThe %s hit you with its barbed tail.";
+      p = "The %s hit you with its barbed tail.";
       i = rnd(25) - c[AC];
       need_beep = 1;
       checkloss(i);
@@ -638,7 +638,7 @@ static int spattack(int x, int xx, int yy)
     case 11:
       if (wizard) return (0);
 
-      p = "\nThe %s has confused you.";
+      p = "The %s has confused you.";
       need_beep = 1;
       c[CONFUSE] += 10 + rnd(10);
       break;
@@ -649,7 +649,7 @@ static int spattack(int x, int xx, int yy)
       break;
 
     case 13:
-      p = "\nThe %s flattens you with it's psionics!";
+      p = "The %s flattens you with it's psionics!";
       i = rnd(15) + 30 - c[AC];
       need_beep = 1;
       checkloss(i);
@@ -661,11 +661,11 @@ static int spattack(int x, int xx, int yy)
 
       if (emptyhanded() == 1)
       {
-        p = "\nThe %s couldn't find anything to steal.";
+        p = "The %s couldn't find anything to steal.";
       }
       else
       {
-        Printf("\nThe %s picks your pocket and takes:", lastmonst);
+        Printf("The %s picks your pocket and takes:", lastmonst);
         if (stealsomething(xx,yy) == 0)
         {
           Print("  nothing");
@@ -679,14 +679,14 @@ static int spattack(int x, int xx, int yy)
 
     case 15:
       i = rnd(10) + 5 - c[AC];
-      p = "\nThe %s bit you!";
+      p = "The %s bit you!";
       need_beep = 1;
       checkloss(i);
       break;
 
     case 16:
       i = rnd(15) + 10 - c[AC];
-      p = "\nThe %s bit you!";
+      p = "The %s bit you!";
       need_beep = 1;
       checkloss(i);
       break;
@@ -857,13 +857,13 @@ static void mmove(int sx, int sy, int dx, int dy)
           (have_talisman && (monst_id == LUCIFER) && (rnd(10) > 7)))
       {
         /* delete the sphere */
-        trap_msg = "\nThe %s%s dispels the sphere!";
+        trap_msg = "The %s%s dispels the sphere!";
         rmsphere(dx, dy);
       }
       else
       {
         /* monster annihilated */
-        trap_msg = "\nThe %s%s is destroyed by the sphere of annihilation!";
+        trap_msg = "The %s%s is destroyed by the sphere of annihilation!";
         mitem[dx][dy].mon = MONST_NONE;
         mitem[dx][dy].n = 0;
         hitp[dx][dy] = 0;
@@ -873,7 +873,7 @@ static void mmove(int sx, int sy, int dx, int dy)
     else
     {
       /* monster annihilated */
-      trap_msg = "\nThe %s%s is destroyed by the sphere of annihilation!";
+      trap_msg = "The %s%s is destroyed by the sphere of annihilation!";
       mitem[dx][dy].mon = MONST_NONE;
       mitem[dx][dy].n = 0;
       hitp[dx][dy] = 0;
@@ -895,7 +895,7 @@ static void mmove(int sx, int sy, int dx, int dy)
     /* monster hits teleport trap */
     if (monst_id < DEMONLORD)
     {
-      trap_msg = "\nThe %s%s gets teleported.";
+      trap_msg = "The %s%s gets teleported.";
       teleportmonst(dx, dy, mitem[dx][dy].mon);
       dx = movedx;
       dy = movedy;
@@ -906,7 +906,7 @@ static void mmove(int sx, int sy, int dx, int dy)
     if ((monster[monst_id].flags & FL_FLY) == 0)
     {
       /* non-flying monsters can fall into pits and trap doors */
-      trap_msg = "\nThe %s%s fell into a pit.";
+      trap_msg = "The %s%s fell into a pit.";
       mitem[dx][dy].mon = MONST_NONE;
       hitp[dx][dy] = 0;
       monst_killed = 1;
@@ -917,7 +917,7 @@ static void mmove(int sx, int sy, int dx, int dy)
     if ((monster[monst_id].flags & FL_FLY) == 0)
     {
       /* non-flying monsters can fall into pits and trap doors */
-      trap_msg = "\nThe %s%s fell through a trapdoor.";
+      trap_msg = "The %s%s fell through a trapdoor.";
       mitem[dx][dy].mon = MONST_NONE;
       hitp[dx][dy] = 0;
       monst_killed = 1;
@@ -928,7 +928,7 @@ static void mmove(int sx, int sy, int dx, int dy)
     /* The monster enters an elevator */
     if (monst_id < DEMONLORD)
     {
-      trap_msg = "\nThe %s%s is carried away by an elevator!";
+      trap_msg = "The %s%s is carried away by an elevator!";
       mitem[dx][dy].mon = MONST_NONE;
       hitp[dx][dy] = 0;
       monst_killed = 1;
@@ -944,12 +944,12 @@ static void mmove(int sx, int sy, int dx, int dy)
     {
       /* the trap killed the monster */
       mitem[dx][dy].mon = MONST_NONE;
-      trap_msg = "\n%s hits and kills the %s.";
+      trap_msg = "%s hits and kills the %s.";
       monst_killed = 1;
     }
     else
     {
-      trap_msg = "\n%s hits the %s.";
+      trap_msg = "%s hits the %s.";
     }
   }
 
@@ -1467,7 +1467,7 @@ void createmonster(MonsterIdType mon)
   if (mon < 1 || mon > MAXMONST + 8)
   {
     UlarnBeep();
-    Printf("\ncan't createmonst(%d)\n", (long) mon);
+    Printf("can't createmonst(%d)", (long) mon);
     nap(3000);
     return;
   }
@@ -1596,7 +1596,7 @@ void hitmonster(int x, int y)
   /* need at least random chance to hit */
   if ((rnd(20) < tmp) || (rnd(71) < 5))
   {
-    Print("\nYou hit");
+    Print("You hit");
     flag = 1;
     damag = fullhit(1);
 
@@ -1604,7 +1604,7 @@ void hitmonster(int x, int y)
   }
   else
   {
-    Print("\nYou missed");
+    Print("You missed");
     flag = 0;
   }
   Printf(" the %s.", lastmonst);
@@ -1631,7 +1631,7 @@ void hitmonster(int x, int y)
         (iven[c[WIELD]] == OBELT))) ||
         (ivenarg[c[WIELD]] > 0))
     {
-      Printf("\nYour weapon is dulled by the %s.", lastmonst);
+      Printf("Your weapon is dulled by the %s.", lastmonst);
       UlarnBeep();
 
       adjustivenarg(c[WIELD], -1);
@@ -1639,7 +1639,7 @@ void hitmonster(int x, int y)
     else if (ivenarg[c[WIELD]] <= -10)
     {
     	/* Destroy the weapon if it is too badly damaged */
-      Printf("\nYour weapon disintegrates!");
+      Printf("Your weapon disintegrates!");
       /* Adjust character attributes for the destroyed item */
       adjustcvalues(iven[c[WIELD]], ivenarg[c[WIELD]]);
       /* Destroy the item */
@@ -1661,7 +1661,7 @@ void hitmonster(int x, int y)
     hitm(x, y, damag, 0);
     if ((monst >= DEMONLORD) && (c[LANCEDEATH]) && (hitp[x][y]))
     {
-      Printf("\nYour lance of death tickles the %s!", lastmonst);
+      Printf("Your lance of death tickles the %s!", lastmonst);
     }
   }
 
@@ -1747,7 +1747,7 @@ int hitm(int x, int y, int amt, int SpellFlag)
         ((monster[monst].flags & FL_HEAD) != 0) &&
         ((monster[monst].flags & FL_NOBEHEAD) == 0))
     {
-      Printf("\nThe Vorpal Blade beheads the %s!", lastmonst);
+      Printf("The Vorpal Blade beheads the %s!", lastmonst);
       amt = hitp[x][y];
     }
     
@@ -1763,7 +1763,7 @@ int hitm(int x, int y, int amt, int SpellFlag)
   {
     int i;
 
-    Printf("\nThe %s died!", lastmonst);
+    Printf("The %s died!", lastmonst);
     raiseexperience((long) monster[monst].experience);
     disappear(x, y);
 
@@ -1836,7 +1836,7 @@ void hitplayer (int x, int y)
     /* Monsters without infravision might miss invisible players */
     if (c[INVISIBILITY]) if (rnd(33)<20)
     {
-      Printf("\nThe %s misses wildly!",lastmonst);
+      Printf("The %s misses wildly!",lastmonst);
       return;
     }
   }
@@ -1847,7 +1847,7 @@ void hitplayer (int x, int y)
     {
       if (rnd(30)+5*monster[mster].level-c[CHARISMA]<30)
       {
-        Printf("\nThe %s is awestruck by your magnificence!",lastmonst);
+        Printf("The %s is awestruck by your magnificence!",lastmonst);
         return;
       }
     }
@@ -1921,7 +1921,7 @@ void hitplayer (int x, int y)
 
   if (((dam + bias) > c[AC]) || (rnd(at_chance) == 1))
   {
-    Printf("\n  The %s hit you.", lastmonst);
+    Printf("The %s hit you.", lastmonst);
     hit_success = 1;
 
     /* Reduce the damage by the player's AC */
@@ -1937,7 +1937,7 @@ void hitplayer (int x, int y)
 
   if (hit_success == 0)
   {
-    Printf("\n  The %s missed.",lastmonst);
+    Printf("  The %s missed.",lastmonst);
   }
 }
 
@@ -2182,7 +2182,7 @@ void parse2(void)
 /* =============================================================================
  * FUNCTION: write_monster_data
  */
-void write_monster_data(FILE *fp)
+void write_monster_data(MemoryFile *fp)
 {
   int i;
   char genocided;
@@ -2202,7 +2202,7 @@ void write_monster_data(FILE *fp)
 /* =============================================================================
  * FUNCTION: read_monster_data
  */
-void read_monster_data(FILE *fp)
+void read_monster_data(MemoryFile *fp)
 {
   int i;
   char genocided;

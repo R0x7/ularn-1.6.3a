@@ -41,46 +41,6 @@
  */
 
 /* =============================================================================
- * FUNCTION: iopts
- *
- * DESCRIPTION:
- * Function to print the ignore option.
- * Originally used to save program space, now probably not required.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-static void iopts(void)
-{
-  Print(", or (i) ignore it? ");
-}
-
-/* =============================================================================
- * FUNCTION: ignore
- *
- * DESCRIPTION:
- * Function to print 'ignore.'.
- * Originally used to save program space, now probably not required.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-static void ignore(void)
-{
-  Print("ignore.\n");
-}
-
-/* =============================================================================
  * FUNCTION: opotion
  *
  * DESCRIPTION:
@@ -94,27 +54,20 @@ static void ignore(void)
  *
  *   None.
  */
-static void opotion(int pot)
+static void opotion(int pot, int ans)
 {
-  int ans;
-
-  ans = get_prompt_input("\nDo you (d) drink it, (t) take it, or (i) ignore it? ", "dit\033", 1);
-
   switch(ans)
   {
     case ESC:
     case 'i':
-      ignore();
       break;
 
     case 'd':
-      Print("drink.\n");
       forget(); /*  destroy potion  */
       quaffpotion(pot);
       break;
 
     case 't':
-      Print("take.\n");
       if (take(OPOTION,pot)==0)  forget();
       break;
 
@@ -137,27 +90,16 @@ static void opotion(int pot)
  *
  *   None.
  */
-void oscroll(int typ)
+void oscroll(int typ, int ans)
 {
-  int ans;
-
-  Print("\nDo you ");
-  if (c[BLINDCOUNT]==0) Print("(r) read it, ");
-  Print("(t) take it");
-  iopts();
-
-  ans = get_prompt_input("", "irt\033", 1);
-
   switch(ans)
   {
     case ESC:
     case 'i':
-      ignore();
       break;
 
     case 'r':
       if (c[BLINDCOUNT]) break;
-      Print("read.");
       /* remove the scroll */
       forget();
       /* read the scroll */
@@ -165,7 +107,6 @@ void oscroll(int typ)
       break;
 
     case 't':
-      Print("take.");
       if (take(OSCROLL,typ)==0)
         forget(); /*  destroy it  */
       break;
@@ -189,34 +130,22 @@ void oscroll(int typ)
  *
  *   None.
  */
-void obook(void)
+void obook(int ans)
 {
-  int ans;
-
-  Print("\nDo you ");
-  if (c[BLINDCOUNT]==0) Print("(r) read it, ");
-  Print("(t) take it");
-  iopts();
-
-  ans = get_prompt_input("", "irt\033", 1);
-
   switch (ans)
   {
     case ESC:
     case 'i':
-      ignore();
       return;
 
     case 'r':
       if (c[BLINDCOUNT]) break;
-      Print("read.");
       readbook(iarg[playerx][playery]);
       /* no more book */
       forget();
       return;
 
     case 't':
-      Print("take.");
       if (take(OBOOK,iarg[playerx][playery])==0)
         forget(); /* no more book */
       return;
@@ -240,37 +169,29 @@ void obook(void)
  *
  *   None
  */
-void ocookie(void)
+void ocookie(int ans)
 {
-  int ans;
   char *p;
-
-  Print("\nDo you (e) eat it, (t) take it");
-  iopts();
-
-  ans = get_prompt_input("", "eit\033", 1);
 
   switch(ans)
   {
     case ESC:
     case 'i':
-      ignore();
       return;
 
     case 'e':
-      Print("eat.\nThe cookie tasted good.");
+      Print("The cookie tasted good.");
       forget(); /* no more cookie */
       if (c[BLINDCOUNT]) return;
 
       p = fortune(fortfile);
       if (p == (char *)NULL) return;
 
-      Print("  A message inside the cookie reads:\n");
+      Print("A message inside the cookie reads:");
       Print(p);
       return;
 
     case 't':
-      Print("take.");
       if (take(OCOOKIE,0)==0) forget();
       return;
 
@@ -316,7 +237,7 @@ void ogold(int arg)
     i *= 1000;
   }
 
-  Printf("\nYou find %d gold piece%s.", i, plural(i));
+  Printf("You find %d gold piece%s.", i, plural(i));
   c[GOLD] += i;
   UpdateStatus();
 
@@ -338,22 +259,15 @@ void ogold(int arg)
  *
  *   None.
  */
-void ochest(void)
+void ochest(int ans)
 {
-  int ans;
-
-  ans = get_prompt_input(
-          "\nDo you (t) take it, (o) try to open it, or (i) ignore it? ",
-          "oti\033", 1);
   switch (ans)
   {
     case 'o':
-      Print(" open it.");
       oopenchest();
       break;
 
     case 't':
-      Print(" take");
       if (take(OCHEST,iarg[playerx][playery])==0)
       {
         item[playerx][playery] = ONOTHING;
@@ -362,7 +276,6 @@ void ochest(void)
 
     case 'i':
     case ESC:
-      ignore();
       break;
 
     default:
@@ -387,9 +300,9 @@ void ochest(void)
  */
 static void finditem(int itm)
 {
-  int tmp, i;
+  int tmp;
 
-  Printf("\n\nYou find %s", objectname[itm]);
+  Printf("You find %s", objectname[itm]);
 
   tmp = iarg[playerx][playery];
   switch (itm)
@@ -419,21 +332,7 @@ static void finditem(int itm)
       }
   }
 
-  Print("\nDo you want to (t) take it");
-  iopts();
-
-  i = get_prompt_input("", "it\033", 1);
-
-  if (i == 't')
-  {
-    Print("take.");
-    if (take(itm, tmp)==0)
-      forget();
-  }
-  else
-  {
-    ignore();
-  }
+  add_option('t', "Take", "");
 }
 
 /* =============================================================================
@@ -456,12 +355,12 @@ void oopenchest(void)
   k = rnd(101);
   if (k < 40)
   {
-    Print("\nThe chest explodes as you open it.");
+    Print("The chest explodes as you open it.");
     UlarnBeep();
     i = rnd(10);
     if (i > c[HP]) i = c[HP];
 
-    Printf("\nYou suffer %d hit point%s damage!", (long)i, plural(i));
+    Printf("You suffer %d hit point%s damage!", (long)i, plural(i));
     losehp(DIED_EXPLODING_CHEST, i);
     UpdateStatus();
 
@@ -469,19 +368,19 @@ void oopenchest(void)
     {
       case 1:
         c[ITCHING]+= rnd(1000)+100;
-        Print("\nYou feel an irritation spread over your skin!");
+        Print("You feel an irritation spread over your skin!");
         UlarnBeep();
         break;
 
       case 2:
         c[CLUMSINESS]+= rnd(1600)+200;
-        Print("\nYou begin to lose hand-eye co-ordination!");
+        Print("You begin to lose hand-eye co-ordination!");
         UlarnBeep();
         break;
 
       case 3:
         c[HALFDAM]+= rnd(1600)+200;
-        Print("\nYou suddenly feel sick and BARF all over your shoes!");
+        Print("You suddenly feel sick and BARF all over your shoes!");
         UlarnBeep();
         break;
     }
@@ -505,7 +404,7 @@ void oopenchest(void)
   }
   else
   {
-    Print("\nNothing happens.");
+    Print("Nothing happens.");
   }
 }
 
@@ -514,9 +413,8 @@ void oopenchest(void)
  */
 void lookforobject(void)
 {
-  int i, j;
+  int i;
   int dx, dy;
-  char code[3];
 
   /* can't find objects is time is stopped */
   if (c[TIMESTOP]) return;
@@ -537,52 +435,57 @@ void lookforobject(void)
       break;
 
     case OPOTION:
-      Print("\n\nYou find a magic potion");
+      Print("You find a magic potion");
       i = iarg[playerx][playery];
       if (potionknown[i]) Printf(" of %s",&potionname[i][1]);
       Print(".");
-      opotion(i);
+	  add_option('d', "Drink", "");
+	  add_option('t', "Take", "");
       break;
 
     case OSCROLL:
-      Print("\n\nYou find a magic scroll");
+      Print("You find a magic scroll");
       i = iarg[playerx][playery];
       if (scrollknown[i]) Printf(" of %s",&scrollname[i][1]);
       Print(".");
-      oscroll(i);
+	  if (c[BLINDCOUNT] == 0)
+	    add_option('r', "Read", "");
+	  add_option('t', "Take", "");
       break;
 
     case OALTAR:
       if (nearbymonst()) return;
-      Print("\n\nThere is a holy altar here.");
-      oaltar();
+      Print("There is a holy altar here.");
+	  set_callback("act_on_object");
+	  add_option('p', "Pray", "");
+	  add_option('d', "Desecrate", "");
+	  add_option('i', "Ignore", "");
       break;
 
     case OBOOK:
-      Print("\n\nYou find a book.");
-      obook();
+      Print("You find a book.");
+	  if (c[BLINDCOUNT] == 0)
+	    add_option('r', "Read", "");
+	  add_option('t', "Take", "");
       break;
 
     case OCOOKIE:
-      Print("\n\nYou find a fortune cookie.");
-      ocookie();
+      Print("You find a fortune cookie.");
+	  add_option('e', "Eat", "");
+	  add_option('t', "Take", "");
       break;
 
     case OTHRONE:
-      if (nearbymonst()) return;
-      Printf("\n\nThere is %s here.", objectname[i]);
-      othrone(0);
-      break;
-
     case OTHRONE2:
       if (nearbymonst()) return;
-      Printf("\n\nThere is %s here.", objectname[i]);
-      othrone(1);
+      Printf("There is %s here.", objectname[i]);
+	  add_option('p', "Pry Jewels", "");
+	  add_option('s', "Sit", "");
       break;
 
     case ODEADTHRONE:
-      Printf("\n\nThere is %s here.", objectname[i]);
-      odeadthrone();
+      Printf("There is %s here.", objectname[i]);
+	  add_option('s', "Sit", "");
       break;
 
     case OORB:
@@ -591,80 +494,9 @@ void lookforobject(void)
       break;
 
     case OBRASSLAMP:
-      Print("\nYou find a brass lamp.");
-
-      i = get_prompt_input(
-        "\nDo you want to (r) rub it, (t) take it, or (i) ignore it? ",
-        "rit\033", 1);
-
-      if (i=='r')
-      {
-        i=rnd(100);
-        if (i>90)
-        {
-          Print("\nThe magic genie was very upset at being disturbed!");
-        
-          losehp(DIED_ANNOYED_GENIE, (int)c[HP]/2+1);
-          UlarnBeep();
-        }
-
-        /* higher level, better chance of spell */
-        else if ( (rnd(100)+c[LEVEL]/2) > 80)
-        {
-          Print("\nA magic genie appears!");
-          get_spell_code("\n  What spell would you like? : ", code);
-
-          Printc('\n');
-          for (i = 0 ; i < SPELL_COUNT ; i++)
-          {
-            if ((spelcode[i][0]==code[0]) &&
-                (spelcode[i][1]==code[1]) &&
-                (spelcode[i][2]==code[2]))
-            {
-              spelknow[i]++;
-              Printf("\nSpell \"%s\":  %s\n%s",spelcode[i],
-                      spelname[i], speldescript[i]);
-              Print("\nThe genie prefers not to be disturbed again.");
-              forget();
-
-              recalc();
-              UpdateStatus();
-              return;
-            }
-          }
-
-          Print("\nThe genie has never heard of such a spell!");
-          Print("\nThe genie prefers not to be disturbed again.");
-          forget();
-
-          recalc();
-          UpdateStatus();
-          return;
-        }
-        else
-        {
-          Print("\nnothing happened.");
-        }
-
-        if (rnd(100) < 15)
-        {
-          Print("\nThe genie prefers not to be disturbed again!");
-          forget();
-          c[LAMP]=0;  /* chance of finding lamp again */
-        }
-
-        UpdateStatus();
-      }
-      else if (i=='t')
-      {
-        Print("take.");
-        if (take(OBRASSLAMP,0)==0)
-          forget();
-      }
-      else
-      {
-        Print("ignore.");
-      }
+      Print("You find a brass lamp.");
+	  add_option('r', "Rub", "");
+	  add_option('t', "Take", "");
       return;
 
     case OWWAND:
@@ -678,40 +510,42 @@ void lookforobject(void)
       break;
 
     case OPIT:
-      Print("\n\nYou're standing at the top of a pit.");
+      Print("You're standing at the top of a pit.");
       opit();
       break;
 
     case OSTAIRSUP:
-      Print("\n\nThere is a circular staircase here.");
-      ostairs(1);  /* up */
+      Print("There is a circular staircase here.");
+	  add_option('u', "Up", "");
       break;
 
     case OELEVATORUP:
-      Print("\n\nYou have found an express elevator going up.");
+      Print("You have found an express elevator going up.");
       oelevator(1);  /*  up  */
       break;
 
     case OELEVATORDOWN:
-      Print("\n\nYou have found an express elevator going down.");
+      Print("You have found an express elevator going down.");
       oelevator(-1);  /*  down  */
       break;
 
     case OFOUNTAIN:
       if (nearbymonst()) return;
-      Print("\n\nThere is a fountain here.");
-      ofountain();
+      Print("There is a fountain here.");
+	  add_option('d', "Drink", "");
+	  add_option('w', "Wash Yourself", "");
       break;
 
     case OSTATUE:
       if (nearbymonst()) return;
-      Print("\n\nYou stand before a statue.");
+      Print("You stand before a statue.");
       ostatue();
       break;
 
     case OCHEST:
-      Print("\n\nThere is a chest here.");
-      ochest();
+      Print("There is a chest here.");
+	  add_option('t', "Take", "");
+	  add_option('o', "Open", "");
       break;
 
     case OIVTELETRAP:
@@ -726,7 +560,7 @@ void lookforobject(void)
        * here.
        */
       know[playerx][playery] = item[playerx][playery];
-      Print("\nZaaaappp!  You've been teleported!\n");
+      Print("Zaaaappp!  You've been teleported!");
       UlarnBeep();
       nap(3000);
       oteleport(0);
@@ -734,25 +568,13 @@ void lookforobject(void)
 
     case OSCHOOL:
       if (nearbymonst()) return;
-      Print("\n\nYou have found the College of Ularn.");
-
-      i = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
-
-      if (i == 'g')
-      {
-        oschool();  /*  the college of larn */
-      }
-      else
-      {
-        Print(" stay here.");
-      }
+      Print("You have found the College of Ularn.");
+	  add_option('g', "Go in", "");
       break;
 
     case OMIRROR:
       if (nearbymonst()) return;
-      Print("\n\nThere is a mirror here.");
+      Print("There is a mirror here.");
       omirror();
       break;
 
@@ -761,54 +583,33 @@ void lookforobject(void)
       if (nearbymonst()) return;
       if (i==OBANK)
       {
-        Print("\n\nYou have found the bank of Ularn.");
+        Print("You have found the bank of Ularn.");
       }
       else
       {
-        Print("\n\nYou have found a branch office of the bank of Ularn.");
+        Print("You have found a branch office of the bank of Ularn.");
       }
-
-      j = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
-
-      if (j == 'g')
-      {
-        if (i==OBANK)
-          obank();
-        else
-          obank2(); /*  the bank of larn  */
-
-      }
-      else
-        Print(" stay here.");
+	  add_option('g', "Go in", "");
       break;
 
     case ODEADFOUNTAIN:
       if (nearbymonst()) return;
-      Print("\n\nThere is a dead fountain here.");
+      Print("There is a dead fountain here.");
       break;
 
     case ODNDSTORE:
       if (nearbymonst()) return;
-      Print("\n\nThere is a DND store here.");
-      i = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
-
-      if (i == 'g')
-        dndstore();  /*  the dnd adventurers store  */
-      else
-        Print(" stay here.");
+      Print("There is a DND store here.");
+	  add_option('g', "Go in", "");
       break;
 
     case OSTAIRSDOWN:
-      Print("\n\nThere is a circular staircase here.");
-      ostairs(-1); /* down */
+      Print("There is a circular staircase here.");
+	  add_option('d', "Down", "");
       break;
 
     case OOPENDOOR:
-      Print("\nThere is an open door here.");
+      Print("There is an open door here.");
       break;
 
     case OCLOSEDDOOR:
@@ -821,15 +622,338 @@ void lookforobject(void)
 
       if (dropflag)
         return;
-      Printf("\n\nYou find %s",objectname[i]);
-      Print("\nDo you (o) try to open it");
-      iopts();
+      Printf("You find %s",objectname[i]);
+	  set_callback("act_on_object");
+	  add_option('o', "Open", "");
+	  add_option('i', "Ignore", "");
+      break;
 
-      i = get_prompt_input("", "oi\033", 1);
+    case OENTRANCE:
+      Print("You have found ");
+      Print(objectname[OENTRANCE]);
+	  add_option('g', "Go in", "");
+      break;
 
-      if ((i==ESC) || (i=='i'))
+    case OVOLDOWN:
+      Print("You have found ");
+      Print(objectname[OVOLDOWN]);
+	  add_option('c', "Climb down", "");
+      return;
+
+    case OVOLUP:
+      Print("You have found ");
+      Print(objectname[OVOLUP]);
+	  add_option('c', "Climb up", "");
+      return;
+
+    case OTRAPARROWIV:
+      if (rnd(17)<13) return; /* for an arrow trap */
+      item[playerx][playery] = OTRAPARROW;
+    case OTRAPARROW:
+      Print("You are hit by an arrow!");
+      UlarnBeep(); /* for an arrow trap */
+
+      losehp(DIED_SHOT_BY_ARROW, rnd(10)+level);
+      UpdateStatus();
+      return;
+
+    case OIVDARTRAP:
+      if (rnd(17)<13) return;   /* for a dart trap */
+      item[playerx][playery] = ODARTRAP;
+    case ODARTRAP:
+      Print("You are hit by a dart!");
+      UlarnBeep(); /* for a dart trap */
+      
+      losehp(DIED_HIT_BY_DART, rnd(5));
+      if ((--c[STRENGTH]) < 3) c[STRENGTH] = 3;
+      UpdateStatus();
+      return;
+
+    case OIVTRAPDOOR:
+      if (rnd(17)<13) return;   /* for a trap door */
+      item[playerx][playery] = OTRAPDOOR;
+    case OTRAPDOOR:
+      for (i=0;i<IVENSIZE;i++)
       {
-        ignore();
+        if (iven[i]==OWWAND)
+        {
+          Print("You escape a trap door.");
+          return;
+        }
+      }
+      if ((level==DBOTTOM)||(level==VBOTTOM))
+      {
+        Print("You fall through a trap door leading straight to HELL!");
+        UlarnBeep();
+        nap(3000);
+        died(DIED_FELL_THROUGH_BOTTOMLESS_TRAPDOOR, 0);
+      }
+      Print("You fall through a trap door!");
+      UlarnBeep();
+      losehp(DIED_FELL_THROUGH_TRAPDOOR, rnd(5+level));
+      nap(2000);
+      newcavelevel(level+1);
+      draws(0,MAXX,0,MAXY);
+      UpdateStatusAndEffects();
+      return;
+
+    case OTRADEPOST:
+      if (nearbymonst()) return;
+      Print("You have found the Ularn trading Post.");
+	  add_option('g', "Go in", "");
+      return;
+
+    case OHOME:
+      if (nearbymonst()) return;
+      Print("You have found your way home.");
+	  add_option('g', "Go in", "");
+      return;
+
+    case OPAD:
+      if (nearbymonst()) return;
+      Print("You have found Dealer McDope's Hideout!");
+	  add_option('g', "Go in", "");
+      return;
+
+    case OSPEED:
+      Print("You find some speed.");
+	  add_option('s', "Snort", "");
+	  add_option('t', "Take", "");
+      break;
+
+    case OSHROOMS:
+      Print("You find some magic mushrooms.");
+	  add_option('e', "Eat", "");
+	  add_option('t', "Take", "");
+      break;
+
+    case OACID:
+      Print("You find some LSD.");
+	  add_option('e', "Eat", "");
+	  add_option('t', "Take", "");
+      break;
+
+    case OHASH:
+      Print("You find some hashish.");
+	  add_option('s', "Smoke", "");
+	  add_option('t', "Take", "");
+      break;
+
+    case OCOKE:
+      Print("You find some cocaine.");
+	  add_option('s', "Snort", "");
+	  add_option('t', "Take", "");
+      break;
+
+    case OWALL:
+      break;
+
+    case OANNIHILATION:
+      if (player_has_item(OSPHTALISMAN))
+      {
+        Print("The Talisman of the Sphere protects you from annihilation!");
+        return;
+      }
+      
+      /* annihilated by sphere of annihilation */
+      died(DIED_SPHERE_ANNIHILATION, 0);
+      return;
+
+    case OLRS:
+      if (nearbymonst()) return;
+      Print("There is an LRS office here.");
+	  add_option('g', "Go in", "");
+      break;
+
+    default:
+	  finditem(i);
+      break;
+  }
+}
+
+/* =============================================================================
+ * FUNCTION: act_on_object
+ */
+void take_item(int ans)
+{
+	if (ans != 't')
+		return;
+
+	if (take(item[playerx][playery], iarg[playerx][playery]) == 0)
+		forget();
+}
+
+extern void move_world(int check_for_object);
+
+void act_on_object(int ans)
+{
+  int i, j;
+  int dx, dy;
+
+  /* can't find objects is time is stopped */
+  if (c[TIMESTOP]) return;
+
+  i=item[playerx][playery];
+  if (i == ONOTHING) return;
+
+  showcell(playerx,playery);
+  yrepcount=0;
+
+  switch (i)
+  {
+    case OPOTION:
+      i = iarg[playerx][playery];
+      opotion(i, ans);
+      break;
+
+    case OSCROLL:
+      i = iarg[playerx][playery];
+      oscroll(i, ans);
+      break;
+
+    case OALTAR:
+      oaltar(ans);
+      move_world(0);
+      break;
+
+    case OBOOK:
+      obook(ans);
+      break;
+
+    case OCOOKIE:
+      ocookie(ans);
+      break;
+
+    case OTHRONE:
+      othrone(0, ans);
+      break;
+
+    case OTHRONE2:
+      othrone(1, ans);
+      break;
+
+    case ODEADTHRONE:
+      odeadthrone(ans);
+      break;
+
+    case OORB:
+      take_item(ans);
+      break;
+
+    case OBRASSLAMP:
+      if (ans=='r')
+      {
+        i=rnd(100);
+        if (i>90)
+        {
+          Print("The magic genie was very upset at being disturbed!");
+      
+          losehp(DIED_ANNOYED_GENIE, (int)c[HP]/2+1);
+          UlarnBeep();
+        }
+
+        /* higher level, better chance of spell */
+        else if ( (rnd(100)+c[LEVEL]/2) > 80)
+        {
+		  j = 0;
+		  for (i = 0; i < SPELL_COUNT; i++)
+		  {
+			if (!spelknow[i])
+			{
+			  add_option(i, spelname[i], "");
+			  j++;
+			}
+		  }
+		  if (j > 0)
+		  {
+			  print_header("A magic genie appears!  What spell would you like?");
+			  set_callback("obrasslamp");
+			  break;
+		  }
+		  else
+			  Print("A magic genie appears!  The genie has no new spells to teach you.");
+        }
+        else
+        {
+          Print("Nothing happened.");
+        }
+
+        if (rnd(100) < 15)
+        {
+          Print("The genie prefers not to be disturbed again!");
+          forget();
+          c[LAMP]=0;  /* chance of finding lamp again */
+        }
+
+        UpdateStatus();
+      }
+      else if (ans=='t')
+      {
+        if (take(OBRASSLAMP,0)==0)
+          forget();
+      }
+      return;
+
+    case OWWAND:
+      take_item(ans);
+      break;
+
+    case OHANDofFEAR:
+      take_item(ans);
+      break;
+
+    case OSTAIRSUP:
+      ostairs(1, ans);  /* up */
+      break;
+
+    case OFOUNTAIN:
+      ofountain(ans);
+      break;
+
+    case OCHEST:
+      ochest(ans);
+      break;
+
+    case OSCHOOL:
+      if (ans == 'g')
+      {
+		  oschool();
+      }
+      break;
+
+    case OBANK2:
+    case OBANK:
+      if (ans == 'g')
+      {
+        if (i==OBANK)
+			obank();
+        else
+			obank2();
+      }
+      break;
+
+    case ODNDSTORE:
+      if (ans == 'g')
+		  dndstore();
+      break;
+
+    case OSTAIRSDOWN:
+      ostairs(-1, ans); /* down */
+      break;
+
+    case OCLOSEDDOOR:
+      
+      /* can't move objects if time is stopped */
+      if (c[TIMESTOP]) return;
+
+      dx = playerx;
+      dy = playery;
+
+      if (dropflag)
+        return;
+
+      if ((ans==ESC) || (ans=='i'))
+      {
         playerx = lastpx;
         playery = lastpy;
         lastpx = (char) dx;
@@ -838,8 +962,6 @@ void lookforobject(void)
       }
       else
       {
-        Print("open.");
-
         /* Try and open the door that is here */
         oopendoor(playerx, playery);
 
@@ -855,17 +977,13 @@ void lookforobject(void)
           lastpx = (char) dx;
           lastpy = (char) dy;
         }
+        
+        move_world(0);
       }
       break;
 
     case OENTRANCE:
-      Print("\nYou have found ");
-      Print(objectname[OENTRANCE]);
-      Print("\nDo you (g) go inside");
-      iopts();
-      i = get_prompt_input("", "gi\033", 1);
-
-      if (i == 'g')
+      if (ans == 'g')
       {
         newcavelevel(1);
         playerx = 33;
@@ -879,40 +997,25 @@ void lookforobject(void)
         UpdateStatusAndEffects();
         return;
       }
-      else
-      {
-        ignore();
-      }
       break;
 
     case OVOLDOWN:
-      Print("\nYou have found ");
-      Print(objectname[OVOLDOWN]);
-      Print("\nDo you (c) climb down");
-      iopts();
-      i = get_prompt_input("", "ci\033", 1);
-
-      if ((i==ESC) || (i=='i'))
+      if ((ans==ESC) || (ans=='i'))
       {
-        ignore();
         break;
       }
       if (level!=0)
       {
-        Print("\nThe shaft only extends 5 feet downward!");
+        Print("The shaft only extends 5 feet downward!");
         return;
       }
       if (packweight() > 45+3*(c[STRENGTH]+c[STREXTRA]))
       {
-        Print("\nYou slip and fall down the shaft.");
+        Print("You slip and fall down the shaft.");
         UlarnBeep();
         
         losehp(DIED_SLIPPED_VOLCANO_SHAFT, 30+rnd(20));
         UpdateStatus();
-      }
-      else
-      {
-        Print("climb down.");
       }
       nap(3000);
       newcavelevel(DBOTTOM+1); /* down to V1 */
@@ -924,27 +1027,19 @@ void lookforobject(void)
       return;
 
     case OVOLUP:
-      Print("\nYou have found ");
-      Print(objectname[OVOLUP]);
-      Print("\nDo you (c) climb up");
-      iopts();
-      i = get_prompt_input("", "ci\033", 1);
-
-      if ((i==ESC) || (i=='i'))
+      if ((ans==ESC) || (ans=='i'))
       {
-        ignore();
         break;
       }
       if (packweight() > 40+5*(c[DEXTERITY]+c[STRENGTH]+c[STREXTRA]))
       {
-        Print("\nYou slip and fall down the shaft.");
+        Print("You slip and fall down the shaft.");
         UlarnBeep();
         
         losehp(DIED_SLIPPED_VOLCANO_SHAFT, 15+rnd(20));
         UpdateStatus();
         return;
       }
-      Print("climb up.");
 
       nap(3000);
       newcavelevel(0);
@@ -964,118 +1059,31 @@ void lookforobject(void)
       UpdateStatusAndEffects();
       return;
 
-    case OTRAPARROWIV:
-      if (rnd(17)<13) return; /* for an arrow trap */
-      item[playerx][playery] = OTRAPARROW;
-    case OTRAPARROW:
-      Print("\nYou are hit by an arrow!");
-      UlarnBeep(); /* for an arrow trap */
-
-      losehp(DIED_SHOT_BY_ARROW, rnd(10)+level);
-      UpdateStatus();
-      return;
-
-    case OIVDARTRAP:
-      if (rnd(17)<13) return;   /* for a dart trap */
-      item[playerx][playery] = ODARTRAP;
-    case ODARTRAP:
-      Print("\nYou are hit by a dart!");
-      UlarnBeep(); /* for a dart trap */
-      
-      losehp(DIED_HIT_BY_DART, rnd(5));
-      if ((--c[STRENGTH]) < 3) c[STRENGTH] = 3;
-      UpdateStatus();
-      return;
-
-    case OIVTRAPDOOR:
-      if (rnd(17)<13) return;   /* for a trap door */
-      item[playerx][playery] = OTRAPDOOR;
-    case OTRAPDOOR:
-      for (i=0;i<IVENSIZE;i++)
-      {
-        if (iven[i]==OWWAND)
-        {
-          Print("\nYou escape a trap door.");
-          return;
-        }
-      }
-      if ((level==DBOTTOM)||(level==VBOTTOM))
-      {
-        Print("\nYou fall through a trap door leading straight to HELL!");
-        UlarnBeep();
-        nap(3000);
-        died(DIED_FELL_THROUGH_BOTTOMLESS_TRAPDOOR, 0);
-      }
-      Print("\nYou fall through a trap door!");
-      UlarnBeep();
-      losehp(DIED_FELL_THROUGH_TRAPDOOR, rnd(5+level));
-      nap(2000);
-      newcavelevel(level+1);
-      draws(0,MAXX,0,MAXY);
-      UpdateStatusAndEffects();
-      return;
-
     case OTRADEPOST:
-      if (nearbymonst()) return;
-      Print("\nYou have found the Ularn trading Post.");
-      i = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
-
-      if (i == 'g')
+      if (ans == 'g')
       {
-        otradepost();
-      }
-      else
-      {
-        Print("stay here.");
+		  otradepost();
       }
       return;
 
     case OHOME:
-      if (nearbymonst()) return;
-      Print("\nYou have found your way home.");
-      i = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
-
-      if (i == 'g')
+      if (ans == 'g')
       {
         ohome();
-      }
-      else
-      {
-        Print("stay here.");
       }
       return;
 
     case OPAD:
-      if (nearbymonst()) return;
-      Print("\nYou have found Dealer McDope's Hideout!");
-      i = get_prompt_input(
-            "\nDo you (c) check it out, or (i) ignore it? ",
-            "ci\033", 1);
-
-      if (i == 'c')
+      if (ans == 'c')
       {
-        opad();
-      }
-      else
-      {
-        Print("forget it.");
+		  opad();
       }
       return;
 
     case OSPEED:
-      Print("\nYou find some speed.");
-      i = get_prompt_input(
-            "\nDo you (s) snort it, (t) take it, or (i) ignore it? ",
-            "sti\033", 1);
-
-      if (i=='s')
+      if (ans=='s')
       {
-        Print("snort!");
-        Print("\nOhwowmanlikethingstotallyseemtoslowdown!");
+        Print("Ohwowmanlikethingstotallyseemtoslowdown!");
         c[HASTESELF] += 200 + c[LEVEL];
         c[HALFDAM] += 300 + rnd(200);
         adjust_ability(INTELLIGENCE, -2);
@@ -1086,27 +1094,16 @@ void lookforobject(void)
         forget();
         UpdateStatus();
       }
-      else if (i=='t')
+      else if (ans=='t')
       {
-        Print("take.");
         if (take(OSPEED,0)==0) forget();
-      }
-      else
-      {
-        Print("ignore.");
       }
       break;
 
     case OSHROOMS:
-      Print("\nYou find some magic mushrooms.");
-      i = get_prompt_input(
-            "\nDo you (e) eat them, (t) take them, or (i) ignore them? ",
-            "eti\033", 1);
-
-      if (i=='e')
+      if (ans=='e')
       {
-        Print("eat!");
-        Print("\nThings start to get real spacey...");
+        Print("Things start to get real spacey...");
         c[HASTEMONST] += rnd(75) + 25;
         c[CONFUSE] += 30+rnd(10);
         adjust_ability(WISDOM, 2);
@@ -1114,27 +1111,16 @@ void lookforobject(void)
         forget();
         UpdateStatus();
       }
-      else if (i=='t')
+      else if (ans=='t')
       {
-        Print("take.");
         if (take(OSHROOMS,0)==0) forget();
-      }
-      else
-      {
-        Print("ignore.");
       }
       break;
 
     case OACID:
-      Print("\nYou find some LSD.");
-      i = get_prompt_input(
-            "\nDo you (e) eat it, (t) take it, or (i) ignore it? ",
-            "eit\033", 1);
-
-      if (i=='e')
+      if (ans=='e')
       {
-        Print("eat!");
-        Print("\nYou are now frying your ass off!");
+        Print("You are now frying your ass off!");
         c[CONFUSE] += 30 + rnd(10);
         adjust_ability(WISDOM, 2);
         adjust_ability(INTELLIGENCE, 2);
@@ -1156,27 +1142,16 @@ void lookforobject(void)
         forget();
         UpdateStatus();
       }
-      else if (i=='t')
+      else if (ans=='t')
       {
-        Print("take.");
         if (take(OACID,0)==0) forget();
-      }
-      else
-      {
-        Print("ignore.");
       }
       break;
 
     case OHASH:
-      Print("\nYou find some hashish.");
-      i = get_prompt_input(
-            "\nDo you (s) smoke it, (t) take it, or (i) ignore it? ",
-            "sti\033", 1);
-
-      if (i=='s')
+      if (ans=='s')
       {
-        Print("smoke!");
-        Print("\nWOW! You feel stooooooned...");
+        Print("WOW! You feel stooooooned...");
         c[HASTEMONST] += rnd(75)+25;
         adjust_ability(INTELLIGENCE, 2);
         adjust_ability(WISDOM, 2);
@@ -1187,27 +1162,16 @@ void lookforobject(void)
         forget();
         UpdateStatus();
       }
-      else if (i=='t')
+      else if (ans=='t')
       {
-        Print("take.");
         if (take(OHASH,0)==0) forget();
-      }
-      else
-      {
-        Print("ignore.");
       }
       break;
 
     case OCOKE:
-      Print("\nYou find some cocaine.");
-      i = get_prompt_input(
-            "\nDo you want to (s) snort it, (t) take it, or (i) ignore it? ",
-            "sit\033", 1);
-
-      if (i=='s')
+      if (ans=='s')
       {
-        Print("snort!");
-        Print("\nYour nose begins to bleed!");
+        Print("Your nose begins to bleed!");
         adjust_ability(DEXTERITY, -2);
         adjust_ability(CONSTITUTION, -2);
         adjust_ability(CHARISMA, 3);
@@ -1220,14 +1184,9 @@ void lookforobject(void)
         forget();
         UpdateStatus();
       }
-      else if (i=='t')
+      else if (ans=='t')
       {
-        Print("take.");
         if (take(OCOKE, 0) == 0) forget();
-      }
-      else
-      {
-        Print("ignore.");
       }
       break;
 
@@ -1237,7 +1196,7 @@ void lookforobject(void)
     case OANNIHILATION:
       if (player_has_item(OSPHTALISMAN))
       {
-        Print("\nThe Talisman of the Sphere protects you from annihilation!");
+        Print("The Talisman of the Sphere protects you from annihilation!");
         return;
       }
       
@@ -1247,25 +1206,31 @@ void lookforobject(void)
 
     case OLRS:
       if (nearbymonst()) return;
-      Print("\n\nThere is an LRS office here.");
-      i = get_prompt_input(
-            "\nDo you (g) go inside, or (i) stay here? ",
-            "gi\033", 1);
 
-      if (i == 'g')
+      if (ans == 'g')
       {
-        olrs();  /*  the larn revenue service */
-      }
-      else
-      {
-        Print(" stay here.");
+		  olrs();
       }
       break;
 
     default:
-      finditem(i);
+	  if (ans == 't')
+	  {
+		  if (take(i, iarg[playerx][playery]) == 0)
+			  forget();
+	  }
       break;
   }
 }
 
+void obrasslamp(int i)
+{
+	spelknow[i]++;
+	Printf("Spell:  %s -- %s<br/>", spelname[i], speldescript[i]);
+	Print("The genie prefers not to be disturbed again.");
+	forget();
+
+	recalc();
+	UpdateStatus();
+}
 

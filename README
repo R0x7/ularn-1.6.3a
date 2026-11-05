@@ -1,23 +1,37 @@
-This is Ularn 1.6, patchlevel 3a (Julian Olds, 3 May 2004).
+This branch (webport-core) holds the C game engine from David Peng's
+browser port of Ularn 1.6.3a (https://github.com/davidpeng/ularn, commit
+0f35290), separated from the JavaScript/HTML front end.
 
-This repository holds the original, unmodified C source for Ularn 1.6.3a,
-laid out the same way as the ularn/ularn (1.5pl4) repository:
+The main branch has the original, unmodified 1.6.3a source. This branch is
+that same code as David Peng changed it to run in a browser:
 
-  src/     game source, plus the per-platform makefiles and project files
-           (TTY/curses, X11, Win32 Borland/MinGW, Amiga)
-  data/    run-time data files that go in LIBDIR (Uhelp, Umaps, Ufortune,
-           Uscore, tile graphics)
+  - Blocking input loops were turned into callbacks: a prompt records which
+    function to call next (set_callback), and the front end calls it with
+    the player's answer. This suits event-driven front ends (web, mobile).
+  - ularn_win.c is a new headless front end that exposes the game state
+    as getters and JSON strings (get_status_json, get_inventory_json,
+    get_map_tile, get_option_json, ...) instead of drawing anything.
+  - Save games go through an in-memory buffer (MemoryFile.c) rather than
+    a file; the scoreboard is not persisted.
+  - The TTY, X11, Windows and Amiga front ends were removed.
 
-The game logic is the same code David Peng compiled to JavaScript for the
-browser version (https://github.com/davidpeng/ularn); that tree had been
-modified for Emscripten and had its native front ends removed. The files
-here are the upstream 1.6.3a distribution with the native front ends
-(ularn_wintty.c, ularn_winx11.c, ularn_win.c, Ularn_winami.c) intact and
-no JavaScript/HTML coupling.
+Gameplay is meant to match 1.6.3a, with small timing differences that
+come from the callback design (for example, monsters move after you finish
+answering a door or altar prompt). The port briefly removed diagonal
+movement in 2014 and restored it in 2015; the data files are identical to
+the main branch.
 
-See INSTALL for building, CHANGES.text for the version history, COPYRIGHT
-for licensing notes (not every module is GPL), and README.spoilers if you
-want hints.
+The only Emscripten-specific code (the <emscripten.h> include and one
+EM_ASM call to the page's showGame() at the end of ULarnSetup) is now
+behind #ifdef __EMSCRIPTEN__, so building the engine no longer requires Emscripten.
+src/build.sh and src/build.bat are David Peng's Emscripten build commands,
+kept for reference (they embed data/ as /lib and write ../web/ularn.js).
+Nothing else here depends on JavaScript or HTML.
+
+Layout:
+
+  src/     game engine and headless front end
+  data/    Uhelp, Umaps, Ufortune (identical to main)
 
 
 ---- original readme below

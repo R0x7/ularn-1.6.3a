@@ -336,7 +336,7 @@ static char *spelmes[] = {
   /* 18 */  "the %s loves fire and lightning!"
 };
 
-static char eys[] = "\nEnter your spell [D for list, ESC to abort]: ";
+static char eys[] = "Enter your spell [D for list, ESC to abort]: ";
 
 /* used for alter reality spell */
 struct isave
@@ -371,7 +371,7 @@ static int isconfuse(void)
 {
   if (c[CONFUSE])
   {
-    Print(" You can't aim your magic!");
+    Print("You can't aim your magic!");
     UlarnBeep();
   }
   return (c[CONFUSE]);
@@ -400,13 +400,13 @@ static int nospell(SpellType x, MonsterIdType monst)
   int tmp;
 
   /* bad spell or monst */
-  if ((x >= SPELL_COUNT) || (monst >= MONST_COUNT) || (monst < 0) || (x < 0))
+  if ((x >= SPELL_COUNT) || (monst >= MONST_COUNT))
     return (0);
 
   if ((tmp = spelweird[monst][x]) == 0)
     return (0);
 
-  Print("\n");
+  Print("");
   Printf(spelmes[tmp], monster[monst].name);
   return (1);
 }
@@ -632,20 +632,20 @@ static void vaporize_rock(void)
  *
  *   None.
  */
-static void direct(SpellType spnum, int dam, char *str, int arg, MagicEffectsType fx)
+static void direct(SpellType spnum, int dam, char *str, int arg, MagicEffectsType fx, ActionType direction)
 {
   int x, y;
   MonsterIdType m;
 
   /* check for bad arguments */
-  if ((spnum < 0) || (spnum >= SPELL_COUNT) || (str == 0))
+  if ((spnum >= SPELL_COUNT) || (str == 0))
     return;
 
   /* check player confusion */
   if (isconfuse()) return;
 
   /* Ask for direction */
-  dirsub(&x, &y);
+  dirsub(&x, &y, direction);
 
   if (!checkxy(x, y))
   {
@@ -694,7 +694,7 @@ static void direct(SpellType spnum, int dam, char *str, int arg, MagicEffectsTyp
 
   if (m == MONST_NONE)
   {
-    Print("  There wasn't anything there!");
+    Print("There wasn't anything there!");
     return;
   }
 
@@ -729,19 +729,19 @@ static void direct(SpellType spnum, int dam, char *str, int arg, MagicEffectsTyp
  *
  *   None.
  */
-static void tdirect(SpellType spnum)
+static void tdirect(SpellType spnum, ActionType direction)
 {
   int x, y;
   MonsterIdType m;
 
   /* check for bad args */
-  if ((spnum < 0) || (spnum >= SPELL_COUNT)) return;
+  if ((spnum >= SPELL_COUNT)) return;
 
   /* check for player confusion */
   if (isconfuse()) return;
 
   /* Ask for direction */
-  dirsub(&x, &y);
+  dirsub(&x, &y, direction);
 
   if (!checkxy(x, y))
   {
@@ -752,7 +752,7 @@ static void tdirect(SpellType spnum)
   m = mitem[x][y].mon;
   if (m == MONST_NONE)
   {
-    Print("  There wasn't anything there!");
+    Print("There wasn't anything there!");
     return;
   }
 
@@ -784,19 +784,19 @@ static void tdirect(SpellType spnum)
  *
  *   None.
  */
-static void makewall(SpellType spnum)
+static void makewall(SpellType spnum, ActionType direction)
 {
   int x, y;
   int tx, ty;
 
   /* check for bad args */
-  if (spnum < 0 || spnum >= SPELL_COUNT) return;
+  if (spnum >= SPELL_COUNT) return;
 
   /* check for player confusion */
   if (isconfuse()) return;
 
   /* Ask for direction */
-  dirsub(&x, &y);
+  dirsub(&x, &y, direction);
 
   if (checkxy(x, y))
   {
@@ -838,22 +838,22 @@ static void makewall(SpellType spnum)
           }
           else
           {
-            Print("\nyou can't make a wall there!");
+            Print("you can't make a wall there!");
           }
         }
         else
         {
-          Print("\nthere's a monster there!");
+          Print("there's a monster there!");
         }
       }
       else
       {
-        Print("\nthere's something there already!");
+        Print("there's something there already!");
       }
     }
     else
     {
-      Print("\nthere's a wall there already!");
+      Print("there's a wall there already!");
     }
   }
 }
@@ -889,7 +889,7 @@ static void omnidirect(SpellType spnum, int dam, char *str, MagicEffectsType fx)
   int frame_count;
 
   /* check for bad args */
-  if (spnum < 0 || spnum >= SPELL_COUNT || str == 0) return;
+  if (spnum >= SPELL_COUNT || str == 0) return;
 
   /* get the area affected */
   xl = max(playerx - 1, 0);
@@ -937,7 +937,7 @@ static void omnidirect(SpellType spnum, int dam, char *str, MagicEffectsType fx)
         if (nospell(spnum, m) == 0)
         {
           ifblind(x, y);
-          Printc('\n');
+
           Printf(str, lastmonst);
           hitm(x, y, dam, 1);
           nap(800);
@@ -967,19 +967,19 @@ static void omnidirect(SpellType spnum, int dam, char *str, MagicEffectsType fx)
  *   None.
  */
 
-static void dirpoly(SpellType spnum)
+static void dirpoly(SpellType spnum, ActionType direction)
 {
   int x, y;
   MonsterIdType m;
 
   /* check for bad args */
-  if (spnum < 0 || spnum >= SPELL_COUNT) return;
+  if (spnum >= SPELL_COUNT) return;
 
   /* check for player confusion */
   if (isconfuse()) return;
 
   /* Ask for direction */
-  dirsub(&x, &y);
+  dirsub(&x, &y, direction);
 
   if (!checkxy(x, y))
   {
@@ -989,7 +989,7 @@ static void dirpoly(SpellType spnum)
 
   if (mitem[x][y].mon == MONST_NONE)
   {
-    Print("  There wasn't anything there!");
+    Print("There wasn't anything there!");
     return;
   }
 
@@ -1031,9 +1031,9 @@ static void dirpoly(SpellType spnum)
  *
  *   None.
  */
-static void genmonst(void)
+static void genmonst(int i)
 {
-  int i, j;
+  int j;
   int done;
   int textmode;
   int column;
@@ -1044,13 +1044,8 @@ static void genmonst(void)
 
   while (!done)
   {
-    Print("\nEnter the number of the monster to genocide [* for list]: ");
-    i = get_num_input(-1);
-
     if (i == -1)
     {
-      set_display(DISPLAY_TEXT);
-      ClearText();
       textmode = 1;
 
       Print("Monster numbers");
@@ -1059,7 +1054,6 @@ static void genmonst(void)
       row = 3;
       for (j = 1 ; j < DEMONLORD ; j++)
       {
-        MoveCursor(column * 28 + 1, row);
         if ((monster[i].flags & FL_GENOCIDED) == 0)
         {
           Printf("%-2d) %s", j, monster[j].name);
@@ -1076,7 +1070,7 @@ static void genmonst(void)
           row++;
         }
       }
-      Print("\n");
+      Print("");
     }
     else if ((i > 0) && (i < DEMONLORD))
     {
@@ -1084,13 +1078,12 @@ static void genmonst(void)
       {
         if (textmode)
         {
-          set_display(DISPLAY_MAP);
           textmode = 0;
         }
 
         /* genocided from game */
         monster[i].flags |= FL_GENOCIDED;
-        Printf("\n  There will be no more %ss.", monster[i].name);
+        Printf("  There will be no more %ss.", monster[i].name);
 
         /* now wipe out monsters on this level */
         newcavelevel(level);
@@ -1104,23 +1097,13 @@ static void genmonst(void)
     {
       if (textmode)
       {
-        set_display(DISPLAY_MAP);
         textmode = 0;
       }
 
-      Print("\n  You sense failure!");
+      Print("You sense failure!");
       done = 1;
     }
 
-  }
-
-  /*
-   * Make sure the map is displayed on exit
-   */
-
-  if (textmode)
-  {
-    set_display(DISPLAY_MAP);
   }
 
 }
@@ -1141,6 +1124,15 @@ static void genmonst(void)
  *
  *   None.
  */
+void add_monster_options()
+{
+    for (int j = 1; j < DEMONLORD; j++)
+    {
+		if ((monster[j].flags & FL_GENOCIDED) == 0)
+			add_option(j, monster[j].name, "");
+    }
+}
+
 static void speldamage(SpellType Spell)
 {
   int  i, j, clev;
@@ -1154,20 +1146,20 @@ static void speldamage(SpellType Spell)
   if (c[TIMESTOP])
   {
     /* not if time stopped */
-    Print("\n  It didn't seem to work.");
+    Print("It didn't seem to work.");
     return;
   }
 
   if ((rnd(23) == 7) || (rnd(18) > c[INTELLIGENCE]))
   {
-    Print("\n  It didn't work!");
+    Print("It didn't work!");
     return;
   }
 
   clev = c[LEVEL];
   if ((clev * 3 + 2) < Spell)
   {
-    Print("\n  Nothing happens.  You seem inexperienced.");
+    Print("Nothing happens.  You seem inexperienced.");
     return;
   }
 
@@ -1186,10 +1178,8 @@ static void speldamage(SpellType Spell)
 
     case SPELL_MLE:
       /* magic missile */
-      i = rnd(((clev + 1) << 1)) + clev + 3;
-      godirect(Spell, i, (clev >= 2) ?
-         "  Your missiles hit the %s." :
-         "  Your missile hit the %s.", 100, EFFECT_MLE);
+	  set_input_type("direction");
+	  set_callback("spell_mle");
       return;
 
     case SPELL_DEX:
@@ -1204,9 +1194,8 @@ static void speldamage(SpellType Spell)
 
     case SPELL_SLE:
       /* sleep   */
-      i = rnd(3) + 1;
-      s = "  While the %s slept, you smashed it %d times.";
-      direct(Spell, fullhit(i), s, i, MAGIC_SLEEP);
+	  set_input_type("direction");
+	  set_callback("spell_sle");
       return;
 
     case SPELL_CHM:
@@ -1217,16 +1206,15 @@ static void speldamage(SpellType Spell)
 
     case SPELL_SSP:
       /* sonic spear */
-      godirect(Spell, rnd(10) + 15 + clev,
-        "  The sound damages the %s.", 70, EFFECT_SSP);
+	  set_input_type("direction");
+	  set_callback("spell_ssp");
       return;
 
     /* ----- LEVEL 2 SPELLS ----- */
     case SPELL_WEB:
       /* web */
-      i = rnd(3) + 2;
-      s = "  While the %s is entangled, you hit it %d times.";
-      direct(Spell, fullhit(i), s, i, MAGIC_WEB);
+	  set_input_type("direction");
+	  set_callback("spell_web");
       return;
 
     case SPELL_STR:
@@ -1272,12 +1260,9 @@ static void speldamage(SpellType Spell)
     case SPELL_CRE:
       if (wizard)
       {
-        Printf("Number: ");
-        if ((i = get_num_input((long) -1)) != -1)
-        {
-          createmonster(i);
-          return;
-        }
+		set_callback("spell_cre");
+		add_monster_options();
+        return;
       }
       createmonster(makemonst(level + 1) + 8);
       return;
@@ -1286,11 +1271,12 @@ static void speldamage(SpellType Spell)
       /* illusion */
       if (rnd(11) + 7 <= c[WISDOM])
       {
-        direct(Spell, rnd(20) + 20 + clev, "  The %s believed!", 0, MAGIC_PHANTASMAL);
+	    set_input_type("direction");
+		set_callback("spell_pha");
       }
       else
       {
-        Print("  It didn't believe the illusions!");
+        Print("It didn't believe the illusions!");
       }
       return;
 
@@ -1312,19 +1298,20 @@ static void speldamage(SpellType Spell)
     /* ----- LEVEL 3 SPELLS ----- */
     case SPELL_BAL:
       /* fireball */
-      godirect(Spell, rnd(25 + clev) + 25 + clev,
-        "  The fireball hits the %s.", 40, EFFECT_BAL);
+	  set_input_type("direction");
+	  set_callback("spell_bal");
       return;
 
     case SPELL_CLD:
       /* cold */
-      godirect(Spell, rnd(25) + 20 + clev,
-        "  The cone of cold strikes the %s.", 60, EFFECT_CLD);
+      set_input_type("direction");
+	  set_callback("spell_cld");
       return;
 
     case SPELL_PLY:
       /* polymorph */
-      dirpoly(Spell);
+      set_input_type("direction");
+	  set_callback("spell_ply");
       return;
 
     case SPELL_CAN:
@@ -1350,20 +1337,20 @@ static void speldamage(SpellType Spell)
     /* ----- LEVEL 4 SPELLS ----- */
     case SPELL_DRY:
       /* dehydration */
-      direct(Spell, 100 + clev, "  The %s shrivels up.", 0, MAGIC_DEHYDRATE);
+	  set_input_type("direction");
+	  set_callback("spell_dry");
       return;
 
     case SPELL_LIT:
       /* lightning */
-      godirect(Spell, rnd(25) + 20 + (clev << 1),
-        "  A lightning bolt hits the %s.", 10, EFFECT_LIT);
+	  set_input_type("direction");
+	  set_callback("spell_lit");
       return;
 
     case SPELL_DRL:
       /* drain life */
-      i = min(c[HP] - 1, c[HPMAX] / 2);
-      direct(Spell, i + i, "", 0, MAGIC_DRAIN);
-      c[HP] -= i;
+	  set_input_type("direction");
+	  set_callback("spell_drl");
       return;
 
     case SPELL_GLO:
@@ -1386,7 +1373,7 @@ static void speldamage(SpellType Spell)
       if (rnd(151) == 63)
       {
         UlarnBeep();
-        Print("\nYour heart stopped!\n");
+        Print("Your heart stopped!");
         nap(4000);
         died(DIED_ERASED_BY_WAYWARD_FINGER, 0);
         return;
@@ -1394,11 +1381,12 @@ static void speldamage(SpellType Spell)
 
       if (c[WISDOM] > rnd(10) + 10)
       {
-        direct(Spell, 2000, "  The %s's heart stopped.", 0, MAGIC_FINGER);
+		set_input_type("direction");
+		set_callback("spell_fgr");
       }
       else
       {
-        Print("  It didn't work.");
+        Print("It didn't work.");
       }
       return;
 
@@ -1431,7 +1419,8 @@ static void speldamage(SpellType Spell)
 
     case SPELL_TEL:
       /* teleport */
-      tdirect(Spell);
+	  set_input_type("direction");
+	  set_callback("spell_tel");
       return;
 
     case SPELL_MFI:
@@ -1442,7 +1431,8 @@ static void speldamage(SpellType Spell)
     /* ----- LEVEL 6 SPELLS ----- */
     case SPELL_MKW:
       /* make wall */
-      makewall(Spell);
+	  set_input_type("direction");
+	  set_callback("spell_mkw");
       return;
 
     case SPELL_SPH:
@@ -1452,40 +1442,37 @@ static void speldamage(SpellType Spell)
         if (!player_has_item(OSPHTALISMAN))
         {
           UlarnBeep();
-          Print("\nYou have been enveloped by the zone of nothingness!\n");
+          Print("You have been enveloped by the zone of nothingness!");
           nap(4000);
           died(DIED_SELF_ANNIHLATED, 0);
           return;
         }
       }
-      xl = playerx;
-      yl = playery;
-      adjust_ability(INTELLIGENCE, -1);
-      i = dirsub(&xl, &yl); /* get direction of sphere */
-      newsphere(xl, yl, i, rnd(20) + 11); /* make a sphere */
+	  set_input_type("direction");
+	  set_callback("spell_sph");
       return;
 
     case SPELL_GEN:
       /* genocide */
-      genmonst();
-      spelknow[SPELL_GEN]--;
-      adjust_ability(INTELLIGENCE, -1);
+	  set_callback("spell_gen");
+	  add_monster_options();
       return;
 
     case SPELL_SUM:
       /* summon demon */
       if (rnd(100) > 30)
       {
-        direct(Spell, 150, "  The demon strikes at the %s.", 0, MAGIC_DEMON);
+		set_input_type("direction");
+		set_callback("spell_sum");
         return;
       }
       if (rnd(100) > 15)
       {
-        Print("  Nothing seems to have happened.");
+        Print("Nothing seems to have happened.");
         return;
       }
 
-      Print("  The demon turned on you and then vanished!");
+      Print("The demon turned on you and then vanished!");
       UlarnBeep();
       i = rnd(40) + 30;
       losehp(DIED_ATTACKED_BY_DEMON, i);  /* must say killed by a demon */
@@ -1629,6 +1616,122 @@ static void speldamage(SpellType Spell)
   }
 }
 
+void spell_mle(ActionType direction)
+{
+	int clev = c[LEVEL];
+    int i = rnd(((clev + 1) << 1)) + clev + 3;
+    godirect(SPELL_MLE, i, (clev >= 2) ?
+        "  Your missiles hit the %s." :
+        "  Your missile hit the %s.", 100, EFFECT_MLE, direction);
+}
+
+void spell_sle(ActionType direction)
+{
+    int i = rnd(3) + 1;
+    char *s = "  While the %s slept, you smashed it %d times.";
+    direct(SPELL_SLE, fullhit(i), s, i, MAGIC_SLEEP, direction);
+}
+
+void spell_ssp(ActionType direction)
+{
+	int clev = c[LEVEL];
+    godirect(SPELL_SSP, rnd(10) + 15 + clev,
+		"  The sound damages the %s.", 70, EFFECT_SSP, direction);
+}
+
+void spell_web(ActionType direction)
+{
+    int i = rnd(3) + 2;
+    char *s = "  While the %s is entangled, you hit it %d times.";
+    direct(SPELL_WEB, fullhit(i), s, i, MAGIC_WEB, direction);
+}
+
+void spell_cre(MonsterIdType mon)
+{
+    createmonster(mon);
+}
+
+void spell_pha(ActionType direction)
+{
+	int clev = c[LEVEL];
+	direct(SPELL_PHA, rnd(20) + 20 + clev, "  The %s believed!", 0, MAGIC_PHANTASMAL, direction);
+}
+
+void spell_bal(ActionType direction)
+{
+	int clev = c[LEVEL];
+    godirect(SPELL_BAL, rnd(25 + clev) + 25 + clev,
+        "  The fireball hits the %s.", 40, EFFECT_BAL, direction);
+}
+
+void spell_cld(ActionType direction)
+{
+	int clev = c[LEVEL];
+    godirect(SPELL_CLD, rnd(25) + 20 + clev,
+		"  The cone of cold strikes the %s.", 60, EFFECT_CLD, direction);
+}
+
+void spell_ply(ActionType direction)
+{
+    dirpoly(SPELL_PLY, direction);
+}
+
+void spell_dry(ActionType direction)
+{
+	int clev = c[LEVEL];
+    direct(SPELL_DRY, 100 + clev, "  The %s shrivels up.", 0, MAGIC_DEHYDRATE, direction);
+}
+
+void spell_lit(ActionType direction)
+{
+	int clev = c[LEVEL];
+    godirect(SPELL_LIT, rnd(25) + 20 + (clev << 1),
+		"  A lightning bolt hits the %s.", 10, EFFECT_LIT, direction);
+}
+
+void spell_drl(ActionType direction)
+{
+    int i = min(c[HP] - 1, c[HPMAX] / 2);
+    direct(SPELL_DRL, i + i, "", 0, MAGIC_DRAIN, direction);
+    c[HP] -= i;
+}
+
+void spell_fgr(ActionType direction)
+{
+    direct(SPELL_FGR, 2000, "  The %s's heart stopped.", 0, MAGIC_FINGER, direction);
+}
+
+void spell_tel(ActionType direction)
+{
+    tdirect(SPELL_TEL, direction);
+}
+
+void spell_mkw(ActionType direction)
+{
+    makewall(SPELL_MKW, direction);
+}
+
+void spell_sph(ActionType direction)
+{
+    int xl = playerx;
+    int yl = playery;
+    adjust_ability(INTELLIGENCE, -1);
+    int i = dirsub(&xl, &yl, direction); /* get direction of sphere */
+    newsphere(xl, yl, i, rnd(20) + 11); /* make a sphere */
+}
+
+void spell_gen(MonsterIdType mon)
+{
+    genmonst(mon);
+    spelknow[SPELL_GEN]--;
+    adjust_ability(INTELLIGENCE, -1);
+}
+
+void spell_sum(ActionType direction)
+{
+    direct(SPELL_SUM, 150, "  The demon strikes at the %s.", 0, MAGIC_DEMON, direction);
+}
+
 
 /* =============================================================================
  * Exported functions
@@ -1637,7 +1740,7 @@ static void speldamage(SpellType Spell)
 /* =============================================================================
  * FUNCTION: godirect
  */
-void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType cshow)
+void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType cshow, ActionType direction)
 {
   char *it;
   int   x, y;
@@ -1647,14 +1750,14 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
   int tx, ty;
 
   /* check for bad args */
-  if ((spnum < 0) || (spnum >= SPELL_COUNT) || (str == 0) || (delay < 0))
+  if ((spnum >= SPELL_COUNT) || (str == 0) || (delay < 0))
     return;
 
   /* Check player confusion */
   if (isconfuse()) return;
 
   /* Ask for direction */
-  dir = dirsub(&x, &y);
+  dir = dirsub(&x, &y, direction);
 
   dx = x - playerx;
   dy = y - playery;
@@ -1674,7 +1777,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
     /* if energy hits player */
     if ((x == playerx) && (y == playery))
     {
-      Print("\nYou are hit by your own magic!");
+      Print("You are hit by your own magic!");
       UlarnBeep();
       losehp(DIED_OWN_MAGIC, dam);
       return;
@@ -1697,8 +1800,8 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
       {
         dx *= -1;
         dy *= -1;
-        Print("\n");
-        Printf("\nthe %s returns your puny missile!",
+        Print("");
+        Printf("the %s returns your puny missile!",
           monster[m].name);
       }
       else
@@ -1709,7 +1812,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
           last_monst_hy = (char) y;
           return;
         }
-        Printc('\n');
+
         Printf(str, lastmonst);
         dam -= hitm(x, y, dam, 1);
         show1cell(x, y);
@@ -1724,7 +1827,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
       switch (*it)
       {
         case OWALL:
-          Printc('\n');
+
           Printf(str, "wall");
           if (dam >= 50 + c[HARDGAME])
           {
@@ -1734,7 +1837,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
               /* can't break wall below V2 */
               if ((x < MAXX - 1) && (y < MAXY - 1) && (x) && (y))
               {
-                Print("  The wall crumbles.");
+                Print("The wall crumbles.");
                 *it = ONOTHING;
                 show1cell(x, y);
                 
@@ -1762,11 +1865,11 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
           break;
 
         case OCLOSEDDOOR:
-          Printc('\n');
+
           Printf(str, "door");
           if (dam >= 40)
           {
-            Print("  The door is blasted apart.");
+            Print("The door is blasted apart.");
             *it = ONOTHING;
             show1cell(x, y);
           }
@@ -1774,7 +1877,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
           break;
 
         case OSTATUE:
-          Printc('\n');
+
           Printf(str, "statue");
           if (dam > 44)
           {
@@ -1783,7 +1886,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
               /*
                * 50% chance of revealing a book if difficulty <= 3
                */
-              Print("  The statue crumbles.");
+              Print("The statue crumbles.");
               *it = OBOOK;
               iarg[x][y] = (char) level;
               show1cell(x, y);
@@ -1793,7 +1896,7 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
           break;
 
         case OTHRONE:
-          Printc('\n');
+
           Printf(str, "throne");
           if (dam > 33)
           {
@@ -1875,7 +1978,7 @@ void annihilate(void)
         }
         else
         {
-          Printf("\nThe %s barely escapes being annihilated!",
+          Printf("The %s barely escapes being annihilated!",
                  monster[monst].name);
           /* lose half hit points */
           hitp[x][y] = (short) ((hitp[x][y] >> 1) + 1);
@@ -1886,7 +1989,7 @@ void annihilate(void)
 
   if (xp > 0)
   {
-    Print("\nYou hear loud screams of agony!");
+    Print("You hear loud screams of agony!");
     raiseexperience(xp);
   }
 
@@ -1906,96 +2009,26 @@ void annihilate(void)
 }
 
 /* =============================================================================
- * FUNCTION: get_spell_code
- */
-void get_spell_code(char *prompt, char *code)
-{
-  int Pos;
-  char a;
-
-  Print(prompt);
-  Pos = 0;
-  do
-  {
-    a = get_prompt_input("", "abcdefghijklmnopqrstuvwxyzD\033", 1);
-
-    if ((Pos == 0) && (a == 'D'))
-    {
-      seemagic(-1);
-      Print(prompt);
-    }
-    else if (a != ESC)
-    {
-      Printc((char) a);
-      code[Pos] = (char) a;
-      Pos++;
-    }
-
-  } while ((a != ESC) && (Pos < 3));
-
-  if (a == ESC)
-  {
-    /* to escape casting a spell   */
-    Print("aborted.");
-    code[0] = 0;
-    return;
-
-  }
-}
-
-/* =============================================================================
  * FUNCTION: cast
  */
-void cast(void)
+void cast(int i)
 {
-  int i;
-  int Found;
-  char code[3];
-
-  if (c[SPELLS] <= 0)
-  {
-    Print("\nYou don't have any spells!");
-    return;
-  }
-
-  do
-  {
-    get_spell_code(eys, code);
-    if (code[0] == 0)
-    {
-      return;
-    }
+	if (c[SPELLS] <= 0)
+	{
+		Print("You don't have any spells!");
+		return;
+	}
 
     /* seq search for his spell */
-    Found = 0;
-    i = 0;
-    while ((i < SPELL_COUNT) && !Found)
+    if (spelknow[i])
     {
-      if ((spelcode[i][0] == code[0]) &&
-          (spelcode[i][1] == code[1]) &&
-          (spelcode[i][2] == code[2]))
-      {
-        if (spelknow[i])
-        {
-          c[SPELLS]--;
-          Printf(" (%s)", spelname[i]);
-          speldamage(i);
-          Found = 1;
-        }
-      }
-
-      i++;
-    }
-
-    if (!Found)
-    {
-     Print(" Unknown spell! Try again.");
+        c[SPELLS]--;
+        Printf("You cast: %s.", spelname[i]);
+        speldamage(i);
     }
 
     recalc();
     UpdateStatusAndEffects();
-
-  } while (!Found);
 }
 
 

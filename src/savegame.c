@@ -60,10 +60,10 @@ static void greedy(void)
   if (wizard)
     return;
 
-  Print("\n\nI am so sorry but your character is a little TOO good!  Since this\n");
-  Print("cannot normally happen from an honest game, I must assume that you cheated.\n");
-  Print("Since you are GREEDY as well as a CHEATER, I cannot allow this game\n");
-  Print("to continue.\n");
+  Print("I am so sorry but your character is a little TOO good!  Since this");
+  Print("cannot normally happen from an honest game, I must assume that you cheated.");
+  Print("Since you are GREEDY as well as a CHEATER, I cannot allow this game");
+  Print("to continue.");
   nap(5000);
   cheat = 1;
   c[GOLD] = c[BANKACCOUNT] = 0;
@@ -92,8 +92,8 @@ static void fsorry(void)
   if (cheat)
     return;
 
-  Print("\nSorry but your savefile has been altered.\n");
-  Print("However, since I am a good sport, I will let you play.\n");
+  Print("Sorry but your savefile has been altered.");
+  Print("However, since I am a good sport, I will let you play.");
   Print("Be advised, though, that you won't be placed on the scoreboard.");
   cheat = 1;
   nap(4000);
@@ -122,10 +122,10 @@ static void fcheat(void)
   if (cheat)
     return;
 
-  Print("\nSorry but your savefile can't be deleted.  This can only mean\n");
-  Print("that you tried to CHEAT by protecting the directory the savefile\n");
-  Print("is in.  Since this is unfair to the rest of the Ularn community, I\n");
-  Print("cannot let you play this game.\n");
+  Print("Sorry but your savefile can't be deleted.  This can only mean");
+  Print("that you tried to CHEAT by protecting the directory the savefile");
+  Print("is in.  Since this is unfair to the rest of the Ularn community, I");
+  Print("cannot let you play this game.");
   nap(5000);
   c[GOLD] = c[BANKACCOUNT] = 0;
   died(DIED_PROTECTED_SAVE_FILE, 0);
@@ -139,9 +139,9 @@ static void fcheat(void)
 /* =============================================================================
  * FUNCTION: savegame
  */
-int savegame(char *fname)
+MemoryFile *savegame()
 {
-  FILE *fp;
+  MemoryFile *fp;
 
   nosignal = 1;
 
@@ -154,14 +154,7 @@ int savegame(char *fname)
   /*
    * try and create the save file
    */
-  fp = fopen(fname, "wb");
-
-  if (fp == NULL)
-  {
-    Printf("Can't open file <%s> to save game\n", fname);
-    nosignal = 0;
-    return(-1);
-  }
+  fp = MemoryFile_create();
 
   FileSum = 0;
 
@@ -174,37 +167,23 @@ int savegame(char *fname)
   /* file sum */
   bwrite(fp, (char *) &FileSum, sizeof(FileSum));
 
-  fclose(fp);
-
   nosignal = 0;
 
-  return(0);
+  return fp;
 }
 
 /* =============================================================================
  * FUNCTION: restoregame
  */
-void restoregame(char *fname)
+void restoregame(char *data)
 {
   int i;
   unsigned int thesum;
   unsigned int asum;
   int TotalAttr;
-  FILE *fp;
+  MemoryFile *fp;
 
-  fp = fopen(fname, "rb");
-
-  if (fp == NULL)
-  {
-    Printf("Can't open file <%s> to restore game\n", fname);
-    nap(4000);
-    c[GOLD] = c[BANKACCOUNT] = 0;
-    died(DIED_MISSING_SAVE_FILE, 0);
-    return;
-  }
-
-  Printf(" Reading data...");
-  init_cells();
+  fp = MemoryFile_open(data);
 
   FileSum = 0;
 
@@ -223,33 +202,10 @@ void restoregame(char *fname)
     fsorry();
   }
 
-  fclose(fp);
+  MemoryFile_dispose(fp);
 
   lastpx = 0;
   lastpy = 0;
-
-  if (strcmp(fname, ckpfile) == 0)
-  {
-    fp = fopen(fname, "ab+");
-
-    if (fp == NULL)
-    {
-      /*
-       * Hmmm. We should be able to write to this file, something fishy
-       * is going on.
-       */
-      fcheat();
-    }
-    else
-    {
-      fclose(fp);
-    }
-  }
-  else if (unlink(fname) == -1)
-  {
-    /* can't unlink save file */
-    fcheat();
-  }
 
   /*  for the greedy cheater checker  */
   TotalAttr = 0;

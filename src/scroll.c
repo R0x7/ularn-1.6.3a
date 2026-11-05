@@ -154,7 +154,7 @@ void read_scroll(int typ)
 
   if (scrollknown[typ] == 0)
     scrollknown[typ] = 1;
-  Printf("\nYou read a scroll of %s.", &(scrollname[typ][1]));
+  Printf("You read a scroll of %s.", &(scrollname[typ][1]));
 
   switch(typ)
   {
@@ -214,7 +214,7 @@ void read_scroll(int typ)
       gtime += 100*i;
       if (gtime < 0) gtime = 0;
 
-      Printf("\nYou go %sward in time by %d mobul%s", (i<0)?"back":"for",
+      Printf("You go %sward in time by %d mobul%s", (i<0)?"back":"for",
         abs(i), plural(i));
 
       adjusttime((long)(i*100));/* adjust time for time warping */
@@ -337,13 +337,19 @@ void read_scroll(int typ)
       break;
 
     case SPULVERIZE:
-      godirect(SPELL_LIT, 150, "The ray hits the %s.", 10, EFFECT_LIT);
+	  set_input_type("direction");
+	  set_callback("spulverize");
       break;
 
     case SLIFEPROT:
       c[LIFEPROT]++;
       break;
   }
+}
+
+void spulverize(ActionType direction)
+{
+	godirect(SPELL_LIT, 150, "The ray hits the %s.", 10, EFFECT_LIT, direction);
 }
 
 /* =============================================================================
@@ -375,15 +381,14 @@ void readbook(int arg)
   /* Learn this spell more */
   spelknow[i]++;
 
-  Printf("\nSpell \"%s\":  %s\n%s.",
-    spelcode[i], spelname[i], speldescript[i]);
+  Printf("Spell:  %s -- %s.", spelname[i], speldescript[i]);
 
   /*
    * Boost int 40% of the time
    */
   if (rnd(10)==4)
   {
-    Print("\nYou feel clever!");
+    Print("You feel clever!");
     c[INTELLIGENCE]++;
     UpdateStatus();
   }

@@ -34,8 +34,8 @@
  * AMIGA_WIN  - Amiga (AGA only) graphical version
  */
 
-#define UNIX_TTY
-//#define UNIX_X11
+//#define UNIX_TTY
+#define UNIX_X11
 //#define WINDOWS
 //#define W32_TTY
 //#define AMIGA_WIN
@@ -56,6 +56,6 @@
  * LIBDIR:
  * This symbol indicates where the data files will reside.
  */
-#define LIBDIR "/usr/lib/ularn"
+#define LIBDIR "lib"
 
 #endif

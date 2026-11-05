@@ -23,7 +23,7 @@
 #ifndef __SAVEUTILS_H
 #define __SAVEUTILS_H
 
-#include <stdio.h>
+#include "MemoryFile.h"
 
 /*
  * This is the current checksum value for bread and bwrite.
@@ -68,7 +68,7 @@ unsigned int sum(unsigned char *data, int n);
  *
  *   None.
  */
-void bwrite(FILE *fp, char *buf, long num);
+void bwrite(MemoryFile *fp, char *buf, long num);
 
 /* =============================================================================
  * FUNCTION: bread
@@ -90,6 +90,6 @@ void bwrite(FILE *fp, char *buf, long num);
  *
  *   None.
  */
-void bread(FILE *fp, char *buf, long num);
+void bread(MemoryFile *fp, char *buf, long num);
 
 #endif

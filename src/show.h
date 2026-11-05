@@ -224,4 +224,6 @@ void show1 (int idx, char *str2[], int known[]);
  */
 void show3 (int index);
 
+char *get_inventory_name3(int index);
+
 #endif

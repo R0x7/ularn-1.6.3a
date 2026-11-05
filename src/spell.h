@@ -130,7 +130,7 @@ extern char *speldescript[SPELL_COUNT];
  *
  *   None.
  */
-void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType cshow);
+void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType cshow, ActionType direction);
 
 /* =============================================================================
  * FUNCTION: annihilate
@@ -151,27 +151,6 @@ void godirect(SpellType spnum, int dam, char *str, int delay, DirEffectsType csh
 void annihilate(void);
 
 /* =============================================================================
- * FUNCTION: get_spell_code
- *
- * DESCRIPTION:
- * Function to get the player to input the three letter spell code.
- *
- * PARAMETERS:
- *
- *   prompt : The prompt to display
- *
- *   code   : A pointer to the string to contain the spell code.
- *            Must be at least 3 characters.
- *            If the spell code entry is aborted (ESC pressed) then the first
- *            character of code is set to 0.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void get_spell_code(char *prompt, char *code);
-
-/* =============================================================================
  * FUNCTION: cast
  *
  * DESCRIPTION:
@@ -185,6 +164,6 @@ void get_spell_code(char *prompt, char *code);
  *
  *   None.
  */
-void cast(void);
+void cast(int i);
 
 #endif

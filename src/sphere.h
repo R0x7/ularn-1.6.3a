@@ -27,7 +27,7 @@
 #ifndef __SPHERE_H
 #define __SPHERE_H
 
-#include <stdio.h>
+#include "MemoryFile.h"
 
 /* =============================================================================
  * FUNCTION: rmsphere
@@ -116,7 +116,7 @@ void free_spheres(void);
  *
  *   None.
  */
-void write_spheres(FILE *fp);
+void write_spheres(MemoryFile *fp);
 
 /* =============================================================================
  * FUNCTION: read_spheres
@@ -132,7 +132,7 @@ void write_spheres(FILE *fp);
  *
  *   None.
  */
-void read_spheres(FILE *fp);
+void read_spheres(MemoryFile *fp);
 
 #endif
 

@@ -28,22 +28,6 @@
 #define __ULARN_ASK_H
 
 /* =============================================================================
- * FUNCTION: more
- *
- * DESCRIPTION:
- * Function to ask --more-- then the user must enter a space.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void more(void);
-
-/* =============================================================================
  * FUNCTION: clearpager
  *
  * DESCRIPTION:
@@ -79,39 +63,6 @@ void clearpager(void);
 void pager(void);
 
 /* =============================================================================
- * FUNCTION: getyn
- *
- * DESCRIPTION:
- * Function to get a yes or no response from the user.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   'y' or 'Y' if the player selected yes
- *   'n' or 'N' if the player selected no.
- */
-int getyn (void);
-
-/* =============================================================================
- * FUNCTION: getpassword
- *
- * DESCRIPTION:
- * Function to ask user for a password (does not echo characters entered)
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   1 if the password was entered correctly or 0 if not.
- */
-int getpassword (void);
-
-/* =============================================================================
  * FUNCTION: dirsub
  *
  * DESCRIPTION:
@@ -130,6 +81,6 @@ int getpassword (void);
  *
  *   The index into diroff of the direction selected.
  */
-int dirsub(int *x, int *y);
+int dirsub(int *x, int *y, ActionType ans);
 
 #endif

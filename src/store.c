@@ -222,7 +222,7 @@ static struct _itm itm[DNDSIZE] =  {
  *
  *   None.
  */
-static void write_dnd_store(FILE *fp)
+static void write_dnd_store(MemoryFile *fp)
 {
   int i;
 
@@ -247,7 +247,7 @@ static void write_dnd_store(FILE *fp)
  *
  *   None.
  */
-static void read_dnd_store(FILE *fp)
+static void read_dnd_store(MemoryFile *fp)
 {
   int i;
 
@@ -274,7 +274,7 @@ static void read_dnd_store(FILE *fp)
  */
 static void handsfull(void)
 {
-  Print("\nYou can't carry anything more!");
+  Print("You can't carry anything more!");
   nap(2200);
 }
 
@@ -294,7 +294,7 @@ static void handsfull(void)
  */
 static void outofstock(void)
 {
-  Print("\nSorry, but we are out of that item.");
+  Print("Sorry, but we are out of that item.");
   nap(2200);
 }
 
@@ -314,7 +314,7 @@ static void outofstock(void)
  */
 static void nogold(void)
 {
-  Print("\nYou don't have enough gold to pay for that!");
+  Print("You don't have enough gold to pay for that!");
   nap(2200);
 }
 
@@ -336,14 +336,8 @@ static void nogold(void)
  */
 static void dnditem(int i)
 {
-  int x, y;
-
   if (i >= DNDSIZE) return;
 
-  x = (i&1)*40 + 1;
-  y = ((i%IVENSIZE)>>1) + 5;
-
-  MoveCursor(x, y);
   if (itm[i].qty == 0)
   {
     Printf("%39s", "");
@@ -364,7 +358,6 @@ static void dnditem(int i)
   {
     Printf("%s", objectname[(int) itm[i].obj]);
   }
-  MoveCursor(x+31, y);
   Printf("%6ld", ((long) (itm[i].price*10L)));
 }
 
@@ -384,9 +377,9 @@ static void dnditem(int i)
  */
 static void dnd_2hed(void)
 {
-  Print("Welcome to the Ularn Thrift Shoppe.  We stock many items explorers find useful\n");
-  Print("in their adventures.  Feel free to browse to your heart's content.\n");
-  Print("Also be advised that if you break 'em, you pay for 'em.");
+  print_header("Welcome to the Ularn Thrift Shoppe.  We stock many items explorers find useful ");
+  print_header("in their adventures.  Feel free to browse to your heart's content. ");
+  print_header("Also be advised that if you break 'em, you pay for 'em.");
 }
 
 /* =============================================================================
@@ -409,9 +402,6 @@ static void dnd_hed(void)
   int i;
 
   for (i=dnditm; i<IVENSIZE+dnditm; i++) dnditem(i);
-
-  MoveCursor(50,18);
-  Print("You have ");
 }
 
 /* =============================================================================
@@ -421,100 +411,77 @@ static void dnd_hed(void)
 /* =============================================================================
  * FUNCTION: dndstore
  */
-void dndstore(void)
+void add_dndstore_options()
 {
-  int i;
+	char name[50], price[50];
+	for (int i = 0; i < DNDSIZE; i++)
+	{
+		if (itm[i].qty == 0)
+			continue;
 
+		switch (itm[i].obj)
+		{
+		case OPOTION:
+			sprintf(name, "potion of %s", &potionname[(int) itm[i].arg][1]);
+			break;
+		case OSCROLL:
+			sprintf(name, "scroll of %s", &scrollname[(int) itm[i].arg][1]);
+			break;
+		default:
+			strcpy(name, objectname[(int) itm[i].obj]);
+			break;
+		}
+		sprintf(price, "%6ld gp", ((long) (itm[i].price*10L)));
+		add_option(i, name, price);
+	}
+	add_option(-1, "Leave", "");
+}
+
+void dndstore()
+{
   dnditm = 0;
   nosignal = 1; /* disable signals */
-
-  set_display(DISPLAY_TEXT);
-
-  ClearText();
 
   dnd_2hed();
   if (outstanding_taxes>0)
   {
-    Print("\n\nThe Ularn Revenue Service has ordered us to not do business with tax evaders.\n");
+    Print("The Ularn Revenue Service has ordered us to not do business with tax evaders.");
     UlarnBeep();
-    Printf("They have also told us that you owe %d gp in back taxes and, as we must\n",(long)outstanding_taxes);
-    Print("comply with the law, we cannot serve you at this time.  So Sorry.\n");
-    Print("\nPress ");
-    Standout("escape");
-    Print(" to leave: ");
-
-    get_prompt_input("", "\033", 0);
-
-    set_display(DISPLAY_MAP);
+    Printf("They have also told us that you owe %d gp in back taxes and, as we must ",(long)outstanding_taxes);
+    Print("comply with the law, we cannot serve you at this time.  So Sorry. ");
 
     nosignal = 0; /* enable signals */
     return;
   }
 
-  dnd_hed();
-  while (1)
-  {
-    MoveCursor(59,18);
-    Printf("%ld gold piece%s", (long)c[GOLD], plural(c[GOLD]));
-    ClearToEOL();
-    ClearToEOPage(1, 20); /* erase to eod */
-    Print("\nEnter your transaction [");
-    Standout("space");
-    Print(" for more, ");
-    Standout("escape");
-    Print(" to leave]? ");
+  set_callback("buy_something");
+  add_dndstore_options();
+}
 
-    i = get_prompt_input("", "abcdefghijklmnopqrstuvwxyz \033", 1);
-
-    if (i==12)
+void buy_something(int i)
+{
+    if (i>=DNDSIZE)
+		outofstock();
+    else if (itm[i].qty <= 0)
+		outofstock();
+    else if (pocketfull())
+		handsfull();
+    else if (c[GOLD] < itm[i].price*10L)
+		nogold();
+    else 
     {
-      ClearText();
-      dnd_2hed();
-      dnd_hed();
-    }
-    else if (i==ESC)
-    {
-      set_display(DISPLAY_MAP);
+		/* Player learns this item */
+		if (itm[i].mem != 0)
+			itm[i].mem[(int) itm[i].arg] = 1 ;
 
-      nosignal = 0; /* enable signals */
-
-      return;
+		c[GOLD] -= itm[i].price*10L;
+		itm[i].qty--;
+		take(itm[i].obj,itm[i].arg);
+		if (itm[i].qty==0)
+			dnditem(i);
+		nap(1001);
     }
-    else if (i==' ')
-    {
-      ClearToEOPage(1, 4);
-      if ((dnditm += IVENSIZE) >= DNDSIZE)
-        dnditm=0;
-      dnd_hed();
-    }
-    else
-    {  /* buy something */
-      Printc((char) i); /* echo the byte */
-      i += dnditm - 'a';
-      if (i>=DNDSIZE)
-        outofstock();
-      else if (itm[i].qty <= 0)
-        outofstock();
-      else if (pocketfull())
-        handsfull();
-      else if (c[GOLD] < itm[i].price*10L)
-        nogold();
-      else 
-      {
-        /* Player learns this item */
-        if (itm[i].mem != 0)
-          itm[i].mem[(int) itm[i].arg] = 1 ;
-
-        c[GOLD] -= itm[i].price*10L;
-        itm[i].qty--;
-        take(itm[i].obj,itm[i].arg);
-        if (itm[i].qty==0)
-          dnditem(i);
-        nap(1001);
-      }
-    }
-
-  }
+    dndstore();
 }
 
 
@@ -559,7 +526,7 @@ char coursetime[MAX_COURSES] = { 10, 15, 10, 20, 10, 10, 10, 5 };
  *
  *   None.
  */
-static void write_college(FILE *fp)
+static void write_college(MemoryFile *fp)
 {
   bwrite(fp, course, MAX_COURSES * sizeof(char));
 }
@@ -578,7 +545,7 @@ static void write_college(FILE *fp)
  *
  *   None.
  */
-static void read_college(FILE *fp)
+static void read_college(MemoryFile *fp)
 {
   bread(fp, course, MAX_COURSES * sizeof(char));
 }
@@ -599,40 +566,10 @@ static void read_college(FILE *fp)
  */
 static void sch_hed(void)
 {
-  ClearText();
+  print_header("The College of Ularn offers the exciting opportunity of higher education to ");
+  print_header("all inhabitants of the caves.  Here is the class schedule. ");
 
-  Print("The College of Ularn offers the exciting opportunity of higher education to\n");
-  Print("all inhabitants of the caves.  Here is the class schedule:\n\n\n");
-  Print("\t\t    Course Name \t       Time Needed\n\n");
-
-  /*line 7 of crt*/
-  if (course[0]==0)
-    Print("\t\ta)  Fighter's Training I        10 mobuls");
-  Printc('\n');
-  if (course[1]==0)
-    Print("\t\tb)  Fighter's Training II       15 mobuls");
-  Printc('\n');
-  if (course[2]==0)
-    Print("\t\tc)  Introduction to Wizardry    10 mobuls");
-  Printc('\n');
-  if (course[3]==0)
-    Print("\t\td)  Applied Wizardry            20 mobuls");
-  Printc('\n');
-  if (course[4]==0)
-    Print("\t\te)  Behavioral Psychology       10 mobuls");
-  Printc('\n');
-  if (course[5]==0)
-    Print("\t\tf)  Faith for Today             10 mobuls");
-  Printc('\n');
-  if (course[6]==0)
-    Print("\t\tg)  Contemporary Dance          10 mobuls");
-  Printc('\n');
-  if (course[7]==0)
-    Print("\t\th)  History of Ularn             5 mobuls");
-
-  Print("\n\n\t\tAll courses cost 250 gold pieces.");
-  MoveCursor(30,18);
-  Print("You are presently carrying ");
+  print_header("All courses cost 250 gold pieces.");
 }
 
 
@@ -643,44 +580,49 @@ static void sch_hed(void)
 /* =============================================================================
  * FUNCTION: oschool
  */
-void oschool(void)
+void add_school_options()
 {
-  int i;
-  long time_used;
+	if (course[0] == 0)
+		add_option('a', "Fighter's Training I", "10 mobuls");
 
+	if (course[1] == 0)
+		add_option('b', "Fighter's Training II", "15 mobuls");
+
+	if (course[2] == 0)
+		add_option('c', "Introduction to Wizardry", "10 mobuls");
+
+	if (course[3] == 0)
+		add_option('d', "Applied Wizardry", "20 mobuls");
+
+	if (course[4] == 0)
+		add_option('e', "Behavioral Psychology", "10 mobuls");
+
+	if (course[5] == 0)
+		add_option('f', "Faith for Today", "10 mobuls");
+
+	if (course[6] == 0)
+		add_option('g', "Contemporary Dance", "10 mobuls");
+
+	if (course[7] == 0)
+		add_option('h', "History of Ularn", "5 mobuls");
+
+	add_option(-1, "Leave", "");
+}
+
+void oschool()
+{
   nosignal = 1; /* disable signals */
-
-  set_display(DISPLAY_TEXT);
 
   sch_hed();
 
-  while (1)
-  {
-    MoveCursor(57,18);
-    Printf("%d gold piece%s.   ", (long)c[GOLD], plural(c[GOLD]));
+  set_callback("take_course");
+  add_school_options();
+}
 
-    Print("\nWhat is your choice [");
-    Standout("escape");
-    Print(" to leave] ? ");
-    yrepcount=0;
-    i = get_prompt_input("", "abcdefgh\033", 1);
+void take_course(int i)
+{
+    long time_used;
 
-    if (i==12)
-    {
-      /* Pressed ^R, so redraw */
-      sch_hed();
-      continue;
-    }
-    else if (i==ESC)
-    {
-      /* exit */
-      nosignal = 0;
-      set_display(DISPLAY_MAP);
-
-      return;
-    }
-
-    Printc((char) i);
     if (c[GOLD] < 250)
     {
       nogold();
@@ -689,7 +631,7 @@ void oschool(void)
     {
       if (course[i-'a'])
       {
-        Print("\nSorry but that class is filled.");
+        Print("Sorry but that class is filled.");
         nap(1000);
       }
       else if (i <= 'h')
@@ -701,26 +643,19 @@ void oschool(void)
           case 'a':
             c[STRENGTH] += 2;
             c[CONSTITUTION]++;
-            Print("\nYou feel stronger!");
-            ClearToEOL();
-            MoveCursor(16,7);
-            ClearToEOL();
+            Print("You feel stronger!");
             break;
 
           case 'b':
             if (course[0]==0)
             {
-              Print("\nSorry but this class has a prerequisite of Fighter's Training I");
-              ClearToEOL();
+              Print("Sorry but this class has a prerequisite of Fighter's Training I");
               c[GOLD]+=250;
               time_used= -10000;
             }
             else
             {
-              Print("\nYou feel much stronger!");
-              ClearToEOL();
-              MoveCursor(16,8);
-              ClearToEOL();
+              Print("You feel much stronger!");
               c[STRENGTH] += 2;
               c[CONSTITUTION] += 2;
             }
@@ -728,60 +663,41 @@ void oschool(void)
 
           case 'c':
             c[INTELLIGENCE] += 2;
-            Print("\nThe task before you now seems more attainable!");
-            ClearToEOL();
-            MoveCursor(16,9);
-            ClearToEOL();
+            Print("The task before you now seems more attainable!");
             break;
 
           case 'd':
             if (course[2]==0)
             {
-              Print("\nSorry but this class has a prerequisite of Introduction to Wizardry");
-              ClearToEOL();
+              Print("Sorry but this class has a prerequisite of Introduction to Wizardry");
               c[GOLD]+=250;
               time_used= -10000;
             }
             else
             {
-              Print("\nThe task before you now seems very attainable!");
-              ClearToEOL();
-              MoveCursor(16, 10);
-              ClearToEOL();
+              Print("The task before you now seems very attainable!");
               c[INTELLIGENCE] += 2;
             }
             break;
 
           case 'e':
             c[CHARISMA] += 3;
-            Print("\nYou now feel like a born leader!");
-            ClearToEOL();
-            MoveCursor(16, 11);
-            ClearToEOL();
+            Print("You now feel like a born leader!");
             break;
 
           case 'f':
             c[WISDOM] += 2;
-            Print("\nYou now feel more confident that you can find the potion in time!");
-            ClearToEOL();
-            MoveCursor(16, 12);
-            ClearToEOL();
+            Print("You now feel more confident that you can find the potion in time!");
             break;
 
           case 'g':
             c[DEXTERITY] += 3;
-            Print("\nYou feel like dancing!");
-            ClearToEOL();
-            MoveCursor(16, 13);
-            ClearToEOL();
+            Print("You feel like dancing!");
             break;
 
           case 'h':
             c[INTELLIGENCE]++;
-            Print("\nWow! e = mc^2!");
-            ClearToEOL();
-            MoveCursor(16, 14);
-            ClearToEOL();
+            Print("Wow! e = mc^2!");
             break;
         }
 
@@ -812,7 +728,7 @@ void oschool(void)
         nap(1000);
       }
     }
-  }
+    oschool();
 }
 
 /* =============================================================================
@@ -862,7 +778,7 @@ static long gemvalue[IVENSIZE]={0};
  *
  *   None.
  */
-static void write_bank(FILE *fp)
+static void write_bank(MemoryFile *fp)
 {
   bwrite(fp, (char *) &lasttime, sizeof(long));
 }
@@ -881,7 +797,7 @@ static void write_bank(FILE *fp)
  *
  *   None.
  */
-static void read_bank(FILE *fp)
+static void read_bank(MemoryFile *fp)
 {
   bread(fp, (char *) &lasttime, sizeof(long));
 }
@@ -902,61 +818,86 @@ static void read_bank(FILE *fp)
  *
  *   None.
  */
-static void appraise(int eye, int order)
+static void obanksub2()
 {
-  long amt;
+  printf_header("You have %8d gold piece%s in the bank.",
+         (long)c[BANKACCOUNT],
+         plural(c[BANKACCOUNT]));
 
-  MoveCursor(1, 20);
-  Printf("I see you have %s", objectname[OLARNEYE]);
-  Print("  I must commend you.  I didn't think\nyou could get it.");
-  Print("  Shall I appraise it for you? ");
+  if (c[BANKACCOUNT]+c[GOLD] >= 500000L)
+  {
+    print_header("Note:  Only deposits under 1,000,000gp can earn interest.");
+  }
+  
+  set_callback("obanksub3");
+  add_option('d', "Deposit", "");
+  add_option('w', "Withdraw", "");
+  add_option('s', "Sell", "");
+  add_option(-1, "Leave", "");
+} 
+ 
+static void appraise()
+{
+  printf_header("I see you have %s.", objectname[OLARNEYE]);
+  print_header("I must commend you.  I didn't think you could get it.");
+  print_header("Shall I appraise it for you? ");
   yrepcount=0;
-  if (getyn()=='y')
-  {
-    Print("yes.\n  Just one moment please...");
-    nap(1000);
-    amt = (long)250000L-((gtime*7)/100)*100;
 
-    if (amt<50000L) amt=50000L;
+  set_callback("appraise2");
+  add_option('y', "Yes", "");
+  add_option('n', "No", "");
+}
 
-    ClearToEOPage(1, 20);
-    MoveCursor(1, 20);
-    Printf("\nThis is an excellent stone.\n");
-    Printf("It is worth %d gold pieces to us\n",(long)amt);
-    Print("Would you like to sell it? ");
-    yrepcount=0;
+void appraise2(int ans)
+{
+	if (ans == 'y')
+	{
+		print_header("Just one moment please...");
+		nap(1000);
+		long amt = (long)250000L-((gtime*7)/100)*100;
 
-    if (getyn()=='y')
-    {
-      Print("yes");
-      c[GOLD]+=amt;
-      iven[eye] = ONOTHING;
-      c[EYEOFLARN] = 0;
+		if (amt<50000L) amt=50000L;
 
-      MoveCursor( (order%2)*40+1 , (order>>1)+4 );
-      Printf("%39s","");
+		printf_header("This is an excellent stone.");
+		printf_header("It is worth %d gold pieces to us.",(long)amt);
+		print_header("Would you like to sell it? ");
+		yrepcount=0;
 
-      MoveCursor(40,17);
-      Printf("%8d",(long)c[BANKACCOUNT]);
-      MoveCursor(49,18);
-      Printf("%8d",(long)c[GOLD]);
-    }
+		set_callback("appraise3");
+		add_option('y', "Yes", "");
+		add_option('n', "No", "");
+	}
     else
-    {
-      Print("no");
-      Print("\nIt is, of course, your privilege to keep the stone.");
-      nap(500);
-   }
-  }
-  else
-  {
-    Print("no.");
-    nap(500);
-  }
+        obanksub2();
+}
 
-  ClearToEOPage(1, 20);
-  MoveCursor(1, 20);
+void appraise3(int ans)
+{
+	long amt;
+	switch (ans)
+	{
+	case 'y':
+		amt = (long)250000L-((gtime*7)/100)*100;
+		if (amt<50000L) amt=50000L;
+		c[GOLD]+=amt;
 
+		for (int i = 0; i < IVENSIZE; i++)
+		{
+			if (iven[i] == OLARNEYE)
+			{
+				iven[i] = ONOTHING;
+				break;
+			}
+		}
+
+		c[EYEOFLARN] = 0;
+		break;
+	case 'n':
+		Print("It is, of course, your privilege to keep the stone.");
+		nap(500);
+		break;
+	}
+    obanksub2();
 }
 
 /* =============================================================================
@@ -973,7 +914,7 @@ static void appraise(int eye, int order)
  *
  *   None.
  */
-static void obanksub(void)
+static void obanksub()
 {
   long amt;
   int i,k, eye=0;
@@ -1004,10 +945,6 @@ static void obanksub(void)
           gemvalue[i] = ivenarg[i]*100;
         }
         gemorder[i] = (short) k;
-        MoveCursor((k%2)*40+1, (k>>1)+4 );
-        Printf("%c) %s", i+'a', objectname[(int) iven[i]]);
-        MoveCursor((k%2)*40+33, (k>>1)+4 );
-        Printf("%5d", (long)gemvalue[i]);
         k++;
         break;
 
@@ -1015,131 +952,143 @@ static void obanksub(void)
         gemvalue[i] = 0;
     }
   }
-  MoveCursor(31,17);
-  Printf("You have %8d gold piece%s in the bank.",
-         (long)c[BANKACCOUNT],
-         plural(c[BANKACCOUNT]));
-
-  MoveCursor(40,18);
-  Printf("You have %8d gold piece%s", (long)c[GOLD], plural(c[GOLD]));
-  if (c[BANKACCOUNT]+c[GOLD] >= 500000L)
-  {
-    Print("\nNote:  Only deposits under 1,000,000gp can earn interest.");
-  }
-
+  
   if (eye)
   {
-    appraise(eye, gemorder[eye]);
+    appraise();
+    return;
   }
-  while (1)
-  {
-    ClearToEOPage(1, 20);
-    MoveCursor(1, 20);
-    Print("\nYour wish? [(");
-    Standout("d");
-    Print(") deposit, (");
-    Standout("w");
-    Print(") withdraw, (");
-    Standout("s");
-    Print(") sell a stone, or ");
-    Standout("escape");
-    Print("]  ");
-    yrepcount=0;
 
-    i = get_prompt_input("", "dws\033", 1);
+  yrepcount=0;
+  obanksub2();
+}
 
-    switch(i)
+void add_gem_options()
+{
+	char value[20];
+	for (int i = 0; i < IVENSIZE; i++)
+	{
+		switch (iven[i])
+		{
+			case OLARNEYE:
+			case ODIAMOND:
+			case OEMERALD:
+			case ORUBY:
+			case OSAPPHIRE:
+				sprintf(value, "%ld gp", gemvalue[i]);
+				add_option(i + 'a', objectname[(int) iven[i]], value);
+				break;
+		}
+	}
+	add_option('*', "Sell All Gems", "");
+	add_option(0, "Back", "");
+}
+
+void obanksub3(int ans)
+{
+	switch (ans)
+	{
+	case 'd':
+		print_header("How much? ");
+		set_input_type("number");
+		set_callback("deposit_money");
+		break;
+	case 'w':
+		print_header("How much? ");
+		set_input_type("number");
+		set_callback("withdraw_money");
+		break;
+	case 's':
+		set_callback("sell_gem");
+		add_gem_options();
+		break;
+	}
+}
+
+void deposit_money(long amt)
+{
+    if (amt < 0)
     {
-      case 'd':
-        Print("deposit\nHow much? ");
-        amt = get_num_input((long)c[GOLD]);
-        if (amt < 0)
+        amt = 0;
+    }
+    else if (amt>c[GOLD])
+    {
+        Print("You don't have that much.");
+        amt = 0;
+        nap(2000);
+    }
+
+    /* Deposit the money */
+    c[GOLD] -= amt;
+    c[BANKACCOUNT] += amt;
+    
+    obanksub2();
+}
+
+void withdraw_money(long amt)
+{
+    if (amt < 0)
+    {
+        amt = 0;
+    }
+    else if (amt > c[BANKACCOUNT])
+    {
+        Print("You don't have that much in the bank!");
+        amt = 0;
+        nap(2000);
+    }
+
+    /* Withdraw the money */
+    c[GOLD] += amt;
+    c[BANKACCOUNT] -= amt;
+    
+    obanksub2();
+}
+
+void sell_gem(int arg)
+{
+	int i;
+    if (arg == 0)
+    {
+        obanksub2();
+        return;
+    }
+    
+    if (arg=='*')
+    {
+        /* sell all gems */
+        for (i=0; i<IVENSIZE; i++)
         {
-          amt = 0;
+			if (gemvalue[i])
+			{
+				if (iven[i]==OLARNEYE)
+					c[EYEOFLARN] = 0;
+				c[GOLD] += gemvalue[i];
+				iven[i]=ONOTHING;
+				gemvalue[i]=0;
+			}
         }
-        else if (amt>c[GOLD])
+        obanksub2();
+    }
+    else
+    {
+		i = arg;
+        if (gemvalue[i=i-'a'] == 0)
         {
-          Print("\n  You don't have that much.");
-          amt = 0;
-          nap(2000);
-        }
-
-        /* Deposit the money */
-        c[GOLD] -= amt;
-        c[BANKACCOUNT] += amt;
-        break;
-
-      case 'w':
-        Print("withdraw\nHow much? ");
-        amt = get_num_input((long)c[BANKACCOUNT]);
-        if (amt < 0)
-        {
-          amt = 0;
-        }
-        else if (amt > c[BANKACCOUNT])
-        {
-          Print("\n  You don't have that much in the bank!");
-          amt = 0;
-          nap(2000);
-        }
-
-        /* Withdraw the money */
-        c[GOLD] += amt;
-        c[BANKACCOUNT] -= amt;
-        break;
-
-      case 's':
-        i = get_prompt_input("sell\nWhich stone would you like to sell? ",
-                             "abcdefghijklmnopqrstuvwxys*", 1);
-
-        if (i=='*')
-        {
-          /* sell all gems */
-          for (i=0; i<IVENSIZE; i++)
-          {
-            if (gemvalue[i])
-            {
-              if (iven[i]==OLARNEYE)
-                c[EYEOFLARN] = 0;
-              c[GOLD] += gemvalue[i];
-              iven[i]=ONOTHING;
-              gemvalue[i]=0;
-              k = gemorder[i];
-              MoveCursor( (k%2)*40+1 , (k>>1)+4 );
-              Printf("%39s","");
-            }
-          }
+			Printf("Item %c is not a gemstone!",i+'a');
+			nap(2000);
         }
         else
         {
-          if (gemvalue[i=i-'a'] == 0)
-          {
-            Printf("\nItem %c is not a gemstone!",i+'a');
-            nap(2000);
-          }
-          else
-          {
-            if (iven[i]==OLARNEYE)
-              c[EYEOFLARN] = 0;
-            c[GOLD]+=gemvalue[i];
-            iven[i]=ONOTHING;
-            gemvalue[i]=0;
-            k = gemorder[i];
-            MoveCursor( (k%2)*40+1 , (k>>1)+4 );
-            Printf("%39s","");
-          }
+			if (iven[i]==OLARNEYE)
+				c[EYEOFLARN] = 0;
+			c[GOLD]+=gemvalue[i];
+			iven[i]=ONOTHING;
+			gemvalue[i]=0;
         }
-        break;
-
-      case ESC:
-        return;
+        set_callback("sell_gem");
+        add_gem_options();
     }
-
-    MoveCursor(40,17);
-    Printf("%8d",(long)c[BANKACCOUNT]);
-    MoveCursor(49,18);
-    Printf("%8d",(long)c[GOLD]);
-  }
 }
 
 /* =============================================================================
@@ -1160,36 +1109,24 @@ static void obanksub(void)
 static void banktitle(char *str)
 {
   nosignal = 1; /* disable signals */
-  set_display(DISPLAY_TEXT);
-  ClearText();
 
-  Print(str);
+  print_header(str);
   if (outstanding_taxes > 0)
   {
-    Print("\n\nThe Ularn Revenue Service has ordered that your account be frozen until all\n");
+    Print("The Ularn Revenue Service has ordered that your account be frozen until all ");
     UlarnBeep();
-    Printf("levied taxes have been paid.  They have also told us that you owe %d gp in\n",(long)outstanding_taxes);
-    Print("taxes and we must comply with them. We cannot serve you at this time.  Sorry.\n");
-    Print("We suggest you go to the LRS office and pay your taxes.\n");
-
-    Print("\nPress ");
-    Standout("escape");
-    Print(" to leave: ");
-
-    get_prompt_input("", "\033", 0);
-
-    set_display(DISPLAY_MAP);
+    Printf("levied taxes have been paid.  They have also told us that you owe %d gp in ",(long)outstanding_taxes);
+    Print("taxes and we must comply with them. We cannot serve you at this time.  Sorry. ");
+    Print("We suggest you go to the LRS office and pay your taxes.");
 
     nosignal = 0; /* enable signals */
 
     return;
   }
-  Print("\n\n\tGemstone\t      Appraisal\t\tGemstone\t      Appraisal");
 
   obanksub();
 
   nosignal = 0; /* enable signals */
-  set_display(DISPLAY_MAP);
 
 }
 
@@ -1200,15 +1137,15 @@ static void banktitle(char *str)
 /* =============================================================================
  * FUNCTION: obank
  */
-void obank(void)
+void obank()
 {
-  banktitle("    Welcome to the First National Bank of Ularn.");
+  banktitle("Welcome to the First National Bank of Ularn.");
 }
 
 /* =============================================================================
  * FUNCTION: obank2
  */
-void obank2(void)
+void obank2()
 {
   banktitle("Welcome to the 8th-level branch office of the First National Bank of Ularn.");
 }
@@ -1268,12 +1205,11 @@ void ointerest(void)
  */
 static void otradhead(void)
 {
-  ClearText();
-  Print("Welcome to the Ularn Trading Post.  We buy items that explorers no longer find\n");
-  Print("useful.  Since the condition of the items you bring in is not certain,\n");
-  Print("and we incur great expense in reconditioning the items, we usually pay\n");
-  Print("only 20% of their value were they to be new.  If the items are badly\n");
-  Print("damaged, we will pay only 10% of their new value.\n\n");
+  print_header("Welcome to the Ularn Trading Post.  We buy items that explorers no longer find ");
+  print_header("useful.  Since the condition of the items you bring in is not certain, ");
+  print_header("and we incur great expense in reconditioning the items, we usually pay ");
+  print_header("only 20% of their value were they to be new.  If the items are badly ");
+  print_header("damaged, we will pay only 10% of their new value. ");
 }
 
 
@@ -1293,7 +1229,7 @@ static void otradhead(void)
  */
 static void cnsitm(void)
 {
-  Print("\nSorry, we can't accept unidentified objects.");
+  Print("Sorry, we can't accept unidentified objects.");
 }
 
 /* =============================================================================
@@ -1373,119 +1309,129 @@ int item_value(int it, int itarg)
 /* =============================================================================
  * FUNCTION: otradepost
  */
-void otradepost(void)
+void add_tradepost_options()
 {
-  int ans;
+	char subtext[20];
+	for (int idx = 0; idx < IVENSIZE; idx++)
+	{
+		int it = iven[idx];
+		int itarg = ivenarg[idx];
+
+		if (it == OSCROLL)
+		{
+			if (!scrollknown[itarg])
+			{
+				continue;
+			}
+		}
+		else if (it == OPOTION)
+		{
+			if (!potionknown[itarg])
+			{
+				continue;
+			}
+		}
+		else if ((it == OLANCE) && ramboflag)
+		{
+			continue;
+		}
+
+		if (it == ONOTHING)
+		{
+			continue;
+		}
+
+		long value = item_value(it, itarg);
+
+		if (value >= 0)
+		{
+			sprintf(subtext, "%ld gp", value);
+			add_option(idx + 'a', get_inventory_name3(idx), subtext);
+		}
+	}
+	add_option(-1, "Leave", "");
+}
+
+void otradepost()
+{
   int no_sell_flag;  /* set to true if the selected item can't be sold */
   int idx;           /* inventory index of the item to sell            */
   int it, itarg;     /* item number and argument of the item to sell   */
   long value;        /* value of the item in gold                      */
 
-  set_display(DISPLAY_TEXT);
-  ClearText();
-
   yrepcount = 0;
   dnditm = 0;
   otradhead();
 
-  while (1)
-  {
-    Print("\nWhat item do you want to sell to us [");
-    Standout("*");
-    Print(" for list, or ");
-    Standout("escape");
-    Print("] ? ");
-    ans = get_prompt_input("", "abcdefghijklmnopqrstuvwxyz.*\033", 1);
+  set_callback("sell_item");
+  add_tradepost_options();
+}
 
-    if (ans == ESC)
+void sell_item(char ans)
+{
+    int no_sell_flag = 0;
+
+    int idx = ans - 'a';
+
+    int it = iven[idx];
+    int itarg = ivenarg[idx];
+
+    if (it == OSCROLL)
     {
-      recalc();
-      set_display(DISPLAY_MAP);
-
-      return;
+		if (!scrollknown[itarg])
+		{
+			/* can't sell unidentified item */
+			no_sell_flag = 1;
+			cnsitm();
+		}
     }
-    else if (ans == '*')
+    else if (it == OPOTION)
     {
-      ClearText();
-      qshowstr();
-      otradhead();
+		if (!potionknown[itarg])
+		{
+			/* can't sell unidentified item */
+			no_sell_flag = 1;
+			cnsitm();
+		}
     }
-    else if ((ans >= 'a') && (ans <= 'z'))
+    else if ((it == OLANCE) && ramboflag)
     {
-      no_sell_flag = 0;
+		no_sell_flag = 1;
+		Print("You don't *really* want to sell that, now do you?");
+    }
 
-      idx = ans - 'a';
+    if (!no_sell_flag)
+    {
+		if (it == ONOTHING)
+		{
+			Printf("You don't have item %c!", ans);
+		}
+		else
+		{
 
-      it = iven[idx];
-      itarg = ivenarg[idx];
+			long value = item_value(it, itarg);
 
-      if (it == OSCROLL)
-      {
-        if (!scrollknown[itarg])
-        {
-          /* can't sell unidentified item */
-          no_sell_flag = 1;
-          cnsitm();
-        }
-      }
-      else if (it == OPOTION)
-      {
-        if (!potionknown[itarg])
-        {
-          /* can't sell unidentified item */
-          no_sell_flag = 1;
-          cnsitm();
-        }
-      }
-      else if ((it == OLANCE) && ramboflag)
-      {
-        no_sell_flag = 1;
-        Print("\nYou don't *really* want to sell that, now do you?");
-      }
+			if (value >= 0)
+			{
+				c[GOLD] += value;
+				if (c[WEAR] == idx) c[WEAR] = -1;
+				if (c[WIELD] == idx) c[WIELD] = -1;
+				if (c[SHIELD] == idx) c[SHIELD] = -1;
+				adjustcvalues(it, itarg);
+				iven[idx] = ONOTHING;
+				recalc();
+			}
+			else
+			{
+				/*
+				* negative value indicates that the item is not in the price list
+				*/
+				Print("So sorry but we are not authorized to accept that item.");
+			}
+		}
+	} /* if not no_sell_flag */
 
-      if (!no_sell_flag)
-      {
-        if (it == ONOTHING)
-        {
-          Printf("\nYou don't have item %c!", ans);
-        }
-        else
-        {
-
-          value = item_value(it, itarg);
-
-          if (value >= 0)
-          {
-            /* show what the item was */
-            show3(idx);
-
-            Printf("\nItem (%c) is worth %d gold piece%s to us.  Do you want to sell it? ", ans, (long)value, plural(value));
-            if (getyn() == 'y')
-            {
-              Print("yes.\n");
-              c[GOLD] += value;
-              if (c[WEAR] == idx) c[WEAR] = -1;
-              if (c[WIELD] == idx) c[WIELD] = -1;
-              if (c[SHIELD] == idx) c[SHIELD] = -1;
-              adjustcvalues(it, itarg);
-              iven[idx] = ONOTHING;
-            }
-            else
-            {
-              Print("no thanks.\n");
-            }
-          }
-          else
-          {
-            /*
-             * negative value indicates that the item is not in the price list
-             */
-            Print("\nSo sorry but we are not authorized to accept that item.");
-          }
-        }
-      } /* if not no_sell_flag */
-    } /* if item selected */
-  }
+    otradepost();
 }
 
 /* =============================================================================
@@ -1507,16 +1453,15 @@ void otradepost(void)
 /* =============================================================================
  * FUNCTION: olrs
  */
-void olrs(void)
+static void add_lrs_options()
 {
-  int i;
-  long amt;
-
+  add_option('p', "Pay Taxes", "");
+  add_option(-1, "Leave", "");
+}
+ 
+void olrs()
+{
   nosignal = 1; /* disable signals */
-  set_display(DISPLAY_TEXT);
-  ClearText();
-
-  MoveCursor(1,4);
 
   if (outstanding_taxes)
   {
@@ -1524,11 +1469,7 @@ void olrs(void)
     {
       Print("Sorry but it seems you are trying to pay off your taxes by cheating!");
 
-      Print("\n\n\tpress [escape] to exit the office.");
-      get_prompt_input("", "\033", 0);
-
       nosignal = 0; /* enable signals */
-      set_display(DISPLAY_MAP);
 
       return;
 
@@ -1536,70 +1477,49 @@ void olrs(void)
 
   }
 
-  Print("Welcome to the Ularn Revenue Service district office.  How can we help you?");
-  while (1)
+  print_header("Welcome to the Ularn Revenue Service district office.  How can we help you?");
+  if (outstanding_taxes>0)
   {
-    MoveCursor(1,6);
-    if (outstanding_taxes>0)
-    {
-      Printf("You presently owe %d gp in taxes.  ",(long)outstanding_taxes);
-    }
-    else
-    {
-      Print("You do not owe us any taxes.           ");
-    }
-
-    MoveCursor(1,8);
-    if (c[GOLD]>0)
-    {
-      Printf("You have %6d gp.    ",(long)c[GOLD]);
-    }
-    else
-    {
-      Print("You have no gold pieces.  ");
-    }
-
-    MoveCursor(1, 20);
-    Print("\n\nYour wish? [(");
-    Standout("p");
-    Print(") pay taxes, or ");
-    Standout("escape");
-    Print("]  ");
-    
-    ClearToEOPage(40, 22);
-    
-    yrepcount=0;
-    i = get_prompt_input("", "p\033", 1);
-
-    switch(i)
-    {
-      case 'p':
-        Print("pay taxes.\nHow much? ");
-        amt = (long) get_num_input((long)c[GOLD]);
-        if (amt < 0)
-        {
-          amt = 0;
-        }
-        else if (amt > c[GOLD])
-        {
-          Print("  You don't have that much.");
-          amt = 0;
-        }
-
-        c[GOLD] -= paytaxes((long)amt);
-        
-        nap(500);
-        
-        break;
-
-      case ESC:
-        nosignal = 0; /* enable signals */
-        set_display(DISPLAY_MAP);
-
-        return;
-    }
-
+    printf_header("You presently owe %d gp in taxes.  ",(long)outstanding_taxes);
   }
+  else
+  {
+    print_header("You do not owe us any taxes.           ");
+  }
+    
+  yrepcount=0;
+
+  set_callback("olrs2");
+  add_lrs_options();
+}
+
+void olrs2(int ans)
+{
+	if (ans == 'p')
+	{
+		print_header("How much? ");
+		set_input_type("number");
+		set_callback("pay_taxes");
+	}
+}
+
+void pay_taxes(long amt)
+{
+    if (amt < 0)
+    {
+        amt = 0;
+    }
+    else if (amt > c[GOLD])
+    {
+        Print("You don't have that much.");
+        amt = 0;
+    }
+
+    c[GOLD] -= paytaxes((long)amt);
+        
+    nap(500);
+    
+    olrs();
 }
 
 
@@ -1672,7 +1592,7 @@ static struct DopeDataType DopeData[DOPE_COUNT] =
  *
  *   None.
  */
-static void write_pad(FILE *fp)
+static void write_pad(MemoryFile *fp)
 {
   bwrite(fp, drug, DOPE_COUNT * sizeof(char));
 }
@@ -1691,7 +1611,7 @@ static void write_pad(FILE *fp)
  *
  *   None.
  */
-static void read_pad(FILE *fp)
+static void read_pad(MemoryFile *fp)
 {
   bread(fp, drug, DOPE_COUNT * sizeof(char));
 }
@@ -1712,7 +1632,7 @@ static void read_pad(FILE *fp)
  */
 static void nomore(void)
 {
-  Print("\nSorry man, I ain't got no more of that stuff.");
+  Print("Sorry man, I ain't got no more of that stuff.");
   nap(2200);
 }
 
@@ -1732,7 +1652,7 @@ static void nomore(void)
  */
 static void nocash(void)
 {
-  Print("\nWhattaya trying to pull on me? You aint got the cash!");
+  Print("Whattaya trying to pull on me? You aint got the cash!");
   nap(1200);
 }
 
@@ -1754,24 +1674,8 @@ static void pad_hd(void)
 {
   int Dope;
 
-  ClearText();
-  Print("Hey man, welcome to Dealer McDope's Pad!  I gots the some of the finest dope\n");
-  Print("you'll find anywhere in Ularn -- check it out...\n\n\n");
-  Print("\t\t    The Stash\t\t\tThe Cash\n\n");
-
-  for (Dope = 0 ; Dope < DOPE_COUNT ; Dope++)
-  {
-    if (drug[Dope] == 0)
-    {
-      MoveCursor(1, DopeData[Dope].Line);
-      Printf("\t\t%c)  %s", 'a' + Dope, DopeData[Dope].Name);
-      MoveCursor(49, DopeData[Dope].Line);
-      Printf("%d bucks", DopeData[Dope].Price);
-    }
-  }
-
-  MoveCursor(30,18);
-  Print("Looks like you got about ");
+  print_header("Hey man, welcome to Dealer McDope's Pad!  I gots the some of the finest dope ");
+  print_header("you'll find anywhere in Ularn -- check it out... ");
 }
 
 /* =============================================================================
@@ -1792,15 +1696,14 @@ static void pad_hd(void)
  */
 static int snag(int itm)
 {
-  ClearToEOPage(1, 20);
   if (pocketfull())
   {
-    Print("\nHey, you can't carry any more.");
+    Print("Hey, you can't carry any more.");
     return(0);
   }
   else 
   {
-    Print("\nOk, here ya go.");
+    Print("Ok, here ya go.");
     take(itm, 0);
 
     return(1);
@@ -1815,81 +1718,61 @@ static int snag(int itm)
 /* =============================================================================
  * FUNCTION: opad
  */
-void opad(void)
+void add_pad_options()
 {
-  int i;
-  int Dope;
+	char price[20];
+	for (int Dope = 0; Dope < DOPE_COUNT; Dope++)
+	{
+		if (drug[Dope] == 0)
+		{
+			sprintf(price, "%d gp", DopeData[Dope].Price);
+			add_option('a' + Dope, DopeData[Dope].Name, price);
+		}
+	}
+	add_option(-1, "Leave", "");
+}
 
+void opad()
+{
   nosignal = 1; /* disable signals */
-
-  set_display(DISPLAY_TEXT);
 
   pad_hd();
 
-  while (1)
-  {
-    MoveCursor(57,18);
-    Printf("%d buck%s on you.   ",(long)c[GOLD],
-      plural(c[GOLD]));
-
-    Print("\nSo, whaddya want [");
-    Standout("escape");
-    Print(" to split] ? ");
-    yrepcount=0;
-
-    i = get_prompt_input("", "abcde\033", 1);
-
-    if (i==12)
-    {
-      /* Redraw */
-      pad_hd();
-      continue;
-    }
-    else if (i==ESC)
-    {
-      nosignal = 0;
-      set_display(DISPLAY_MAP);
-
-      return;
-    }
-    Printc((char) i);
-
-    if ((i >= 'a') && (i < ('a' + DOPE_COUNT)))
-    {
-      Dope = i - 'a';
-
-      if (drug[Dope])
-      {
-        /* None of that dope left */
-        nomore();
-      }
-      else
-      {
-        if (c[GOLD] < DopeData[Dope].Price)
-        {
-          /* Player can't afford this */
-          nocash();
-        }
-        else if (snag(DopeData[Dope].Item))
-        {
-          /* Player can afford and has taken, so pay for it. */
-          c[GOLD] -= DopeData[Dope].Price;
-
-          /* Remove line from the screen for this dope */
-          MoveCursor(16, DopeData[Dope].Line);
-          ClearToEOL();
-
-          /* Note tht this drug has been bought */
-          drug[Dope]++;
-          nap(1000);
-
-        }
-
-      }
-    }
-
-  } /*end while(1) */
+  set_callback("buy_dope");
+  add_pad_options();
 } /* end pad() */
+
+void buy_dope(int i)
+{
+    int Dope = i - 'a';
+
+    if (drug[Dope])
+    {
+		/* None of that dope left */
+		nomore();
+    }
+    else
+    {
+		if (c[GOLD] < DopeData[Dope].Price)
+		{
+			/* Player can't afford this */
+			nocash();
+		}
+		else if (snag(DopeData[Dope].Item))
+		{
+			/* Player can afford and has taken, so pay for it. */
+			c[GOLD] -= DopeData[Dope].Price;
+
+			/* Note tht this drug has been bought */
+			drug[Dope]++;
+			nap(1000);
+
+		}
+
+    }
+
+    opad();
+}
 
 
 
@@ -1916,111 +1799,96 @@ void ohome(void)
 {
   int i;
 
-  set_display(DISPLAY_TEXT);
-
   nosignal = 1; /* disable signals */
+  set_callback("ohome2");
   for (i=0; i<IVENSIZE; i++)
     /* remove the potion of cure dianthroritis from inventory */
     if (iven[i]==OPOTION)
       if (ivenarg[i]==PCUREDIANTH)
       {
         iven[i] = ONOTHING;
-        ClearText();
 
-        Print("Congratulations.  You found the potion of cure "
-             "dianthroritis!\n");
-        Print("\nFrankly, No one thought you could do it.");
-        Print("  Boy!  Did you surprise them!\n");
+        print_header("Congratulations.  You found the potion of cure "
+             "dianthroritis!");
+        print_header("Frankly, No one thought you could do it.");
+        print_header("Boy!  Did you surprise them!");
         nap(1000);
         if (gtime>TIMELIMIT) {
-          Print("\nHowever... the doctor has the sad duty to "
-               "inform you that your daughter has\n");
-          Print("died! You didn't make it in time.  In your agony, "
-               "you kill the doctor,\nyour ");
+          print_header("However... the doctor has the sad duty to "
+               "inform you that your daughter has ");
+          print_header("died! You didn't make it in time.  In your agony, "
+               "you kill the doctor, your ");
           if (sex == 1)
-            Print("wife");
+            print_header("wife");
           else
-            Print("husband");
-          Print(" and yourself!  Too bad...\n");
+            print_header("husband");
+          print_header(" and yourself!");
           nap(5000);
-          died(DIED_KILLED_FAMILY, 0);
+          add_option(DIED_KILLED_FAMILY, "Too bad...", "");
+          return;
         }
         else
         {
-          Print("\nThe doctor is now administering the potion and, "
-               "in a few moments,\n");
-          Print("your daughter should be well on her way to "
-               "recovery.\n");
+          print_header("The doctor is now administering the potion and, "
+               "in a few moments, ");
+          print_header("your daughter should be well on her way to "
+               "recovery.");
           nap(6000);
-          Print("\nThe potion is.");
+          print_header("The potion is.");
           nap(1000);
-          Print(".");
+          print_header(".");
           nap(1000);
-          Print(".");
+          print_header(".");
           nap(1000);
-          Print(" working!  The doctor thinks that\n");
-          Print("your daughter will recover in a few days.  "
-               "Congratulations!");
+          print_header(" working!  The doctor thinks that ");
+          print_header("your daughter will recover in a few days.");
           UlarnBeep();
           nap(5000);
-          died(DIED_WINNER, 0);
+          add_option(DIED_WINNER, "Congratulations!", "");
+          return;
         }
       }
 
-  while (1)
+  print_header("Welcome home.");
+  print_header("Latest word from the doctor is not good.");
+
+  if (gtime > TIMELIMIT)
   {
-    ClearText();
-    Printf("Welcome home %s.",logname);
-    Print("  Latest word from the doctor is not good.\n");
-
-    if (gtime > TIMELIMIT)
-    {
-      Print("\nThe doctor has the sad duty to inform you that your "
-           "daughter has died!\n");
-      Print("You didn't make it in time.");
-      Print("In your agony, you kill the doctor,\nyour ");
-      if (sex == 1)
-        Print("wife");
-      else
-        Print("husband");
-      Print(" and yourself!  Too bad...");
-      nap(5000);
-      died(DIED_KILLED_FAMILY, 0);
-    }
-
-    Print("\nThe diagnosis is confirmed as dianthroritis.  "
-         "He guesses that\n");
-    Printf("your daughter has only %d mobuls left in this world.  "
-        "It's up to you,\n",(long)((TIMELIMIT-gtime+99)/100));
-    Printf("%s, to find the only hope for your daughter, the very rare\n",
-        logname);
-    Print("potion of cure dianthroritis.  It is rumored that only deep "
-         "in the\n");
-    Print("depths of the caves can this potion be found.\n\n\n");
-    Print("\n     ----- press ");
-    Standout("return");
-    Print(" to continue, ");
-    Standout("escape");
-    Print(" to leave ----- ");
-
-    i = get_prompt_input("", "\033\015", 0);
-
-    if (i == ESC)
-    {
-      set_display(DISPLAY_MAP);
-
-      nosignal = 0; /* enable signals */
-
-      return;
-    }
+    print_header("The doctor has the sad duty to inform you that your "
+         "daughter has died!");
+    print_header("You didn't make it in time.");
+    print_header("In your agony, you kill the doctor, your ");
+    if (sex == 1)
+      print_header("wife");
+    else
+      print_header("husband");
+    print_header(" and yourself!");
+    nap(5000);
+    add_option(DIED_KILLED_FAMILY, "Too bad...", "");
+    return;
   }
+
+  print_header("The diagnosis is confirmed as dianthroritis.  "
+       "He guesses that ");
+  printf_header("your daughter has only %d mobuls left in this world.",(long)((TIMELIMIT-gtime+99)/100));
+  print_header("It's up to you to find the only hope for your daughter, the very rare ");
+  print_header("potion of cure dianthroritis.  It is rumored that only deep "
+       "in the ");
+  print_header("depths of the caves can this potion be found. ");
+  add_option(-1, "Leave", "");
+  nosignal = 0; /* enable signals */
+}
+
+void ohome2(int died_reason)
+{
+    died(died_reason, 0);
 }
 
 
 /* =============================================================================
  * FUNCTION: write_store
  */
-void write_store(FILE *fp)
+void write_store(MemoryFile *fp)
 {
   write_dnd_store(fp);
   write_college(fp);
@@ -2031,12 +1899,11 @@ void write_store(FILE *fp)
 /* =============================================================================
  * FUNCTION: read_store
  */
-void read_store(FILE *fp)
+void read_store(MemoryFile *fp)
 {
   read_dnd_store(fp);
   read_college(fp);
   read_bank(fp);
   read_pad(fp);
 }
-
 

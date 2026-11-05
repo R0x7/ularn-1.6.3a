@@ -43,17 +43,6 @@ static int srcount = 0;
  */
 
 /* =============================================================================
- * FUNCTION: more
- */
-void more(void)
-{
-  Print("\n  --- press ");
-  Standout("space");
-  Print(" to continue --- ");
-  get_prompt_input("", " ", 0);
-}
-
-/* =============================================================================
  * FUNCTION: clearpager
  */
 void clearpager(void)
@@ -69,53 +58,14 @@ void pager(void)
   if (++srcount >= 22)
   {
     srcount = 0;
-    more();
-    ClearText();
-  }
-}
-
-/* =============================================================================
- * FUNCTION: getyn
- */
-int getyn (void)
-{
-  int i;
-
-  i = get_prompt_input("", "yYnN\033 ", 1);
-
-  if (isspace(i)) i = ESC;
-
-  return (i);
-}
-
-/* =============================================================================
- * FUNCTION: getpassword
- */
-int getpassword (void)
-{
-  char gpwbuf[9];
-
-  Print("\nEnter Password: ");
-
-  get_password_input(gpwbuf, 8);
-
-  if (strcmp(gpwbuf, password) != 0)
-  {
-    Print("\nSorry.\n");
-    return(0);
-  }
-  else
-  {
-    return(1);
   }
 }
 
 /* =============================================================================
  * FUNCTION: dirsub
  */
-int dirsub(int *x, int *y)
+int dirsub(int *x, int *y, ActionType ans)
 {
-  ActionType ans;
   int d;
   ActionType dir_order[9];
 
@@ -133,14 +83,10 @@ int dirsub(int *x, int *y)
   dir_order[7] = ACTION_MOVE_SOUTHWEST;
   dir_order[8] = 0;
 
-  ans = get_dir_input("\nIn What Direction? ", 1);
-
   d = 0;
   while (dir_order[d] != ans) d++;
 
   d++;
-
-  Print(dirname[d]);
 
   *x = playerx + diroffx[d];
   *y = playery + diroffy[d];

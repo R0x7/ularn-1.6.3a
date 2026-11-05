@@ -2,37 +2,31 @@ Ularn 1.6.3a should contain the following files:
 
 Filename                Description
 --------                -----------
-README                  it's the readme (original Readme.txt below a short preface)
+README                  it's the readme (branch notes, then the original Readme.txt)
 README.spoilers         spoiler guide from Phil Cordier's web site
-README.amiga            notes for the Amiga version
 INSTALL                 build and installation instructions
 CHANGES.text            version history
 MANIFEST                this list
 LICENSE                 GNU General Public License, version 2
 COPYRIGHT               authorship, and which modules are NOT GPL
 BSDLicense.txt          BSD license template, as shipped in the distribution
-Makefile                runs the TTY or X11 build in src/
 
-data/                   run-time files, installed into LIBDIR
+data/                   run-time files, read from ./lib by the engine
   Uhelp                 help file
   Umaps                 predefined dungeon maps
   Ufortune              fortune cookie messages
-  Uscore                scoreboard
-  ularn_gfx.xpm         tile graphics, X11 version
-  ularn_gfx.bmp         tile graphics, Windows version
-  Ularn_gfx.iff         tile graphics, Amiga version
-  gfx_guide.txt         index of the tiles in the graphics files
 
-src/                    game source
-  ularn.c               main module: setup and main processing loop
-  ularn_game.c/.h       game data and options file handling
-  ularn_ask.c/.h        common prompts (yes/no, direction, etc.)
+src/                    game engine
+  ularn.c               setup (ULarnSetup) and command dispatch
+  ularn_game.c/.h       game data and options
+  ularn_ask.c/.h        prompts, as callbacks
+  ularn_win.c/.h        headless front end: state getters and JSON output
+  MemoryFile.c/.h       in-memory file used for save games
   action.c/.h           player actions
   diag.c/.h             diagnostic dump
   dungeon.c/.h          dungeon levels
   dungeon_obj.c/.h      static dungeon objects (altars, thrones, fountains...)
   fortune.c/.h          fortune cookies
-  getopt.c/.h           command line option processing
   header.h              common macros
   help.c/.h             help file and welcome screen
   itm.c/.h              item definitions and names
@@ -49,47 +43,5 @@ src/                    game source
   spell.c/.h            spells
   sphere.c/.h           spheres of annihilation
   store.c/.h            the home level: DND store, bank, college, LRS, etc.
-  config.h              build selection (UNIX_TTY, UNIX_X11, WINDOWS,
-                        W32_TTY, AMIGA_WIN) and LIBDIR
-
-  Front ends (all OS dependent input and display code; one is linked)
-  ularn_win.h           interface every front end implements
-  ularn_wintty.c        curses version (Unix TTY, Win32 TTY with pdcurses)
-  ularn_winx11.c        X11 version
-  x11_simple_menu.c/.h  X11 menu library (not GPL, see COPYRIGHT)
-  ularn_win.c           Windows 32 graphical version
-  ularn_private.h       Dev-C++ resource header
-  Ularn_winami.c        Amiga (AGA) version
-  Smart_menu.c/.h       Amiga Intuition menu helper (not GPL)
-  ifftools.c/.h         Amiga IFF ILBM reader (not GPL)
-  bio.c/.h              Amiga buffered I/O (not GPL)
-
-  Build files
-  makefile.tty          Unix TTY (gcc, curses)
-  makefile.x11          Unix X11 (gcc, Xlib, Xpm)
-  makefile.mgwtty       Win32 TTY (MinGW)
-  Makefile.mingw        Win32 graphical (MinGW)
-  Makefile.win          Win32 graphical (Dev-C++ generated)
-  ularn.dev             Dev-C++ project
-  makefile.bcc          Win32 graphical (Borland C++ 5.5)
-  makefile.bcctty       Win32 TTY (Borland C++ 5.5, pdcurses)
-  ularn.rsp             Borland linker response file, graphical
-  ularntty.rsp          Borland linker response file, TTY
-  ularn.def             Borland module definition file
-  ularnpc.ide           Borland IDE project
-  ularnpc.rc/.rh/.RES   Windows resources (Borland)
-  ularn_private.rc/.res Windows resources (Dev-C++/MinGW)
-  ularn.ico             Windows icon
-  makefile.ami          Amiga (SAS/C 6.51)
-  ularn.info            Amiga Workbench icon
-  checkmark.bm          Amiga menu checkmark bitmap
-  cursor.bm             Amiga cursor bitmap
-
-  Not built (left as shipped in the 1.6.3a distribution)
-  ularn_orig.c          earlier version of ularn.c
-  ularn_integ.c         Windows integration test main
-  ularn_main.c          front end smoke test main
-  test.c                curses colour test
-  comment_templates.c   comment block templates used by the author
-  bill.c                "mail on winning" letters from 1.5 (feature removed)
-  extern.h              old global header from 1.5 (bill.c only)
+  config.h              LIBDIR
+  build.sh, build.bat   Emscripten build commands (reference)

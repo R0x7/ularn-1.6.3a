@@ -64,7 +64,7 @@ void run (int dir);
  *
  *   None.
  */
-void wield (void);
+void wield (int);
 
 /* =============================================================================
  * FUNCTION: wear
@@ -80,7 +80,7 @@ void wield (void);
  *
  *   None.
  */
-void wear (void);
+void wear (int);
 
 /* =============================================================================
  * FUNCTION: dropobj
@@ -96,7 +96,7 @@ void wear (void);
  *
  *   None.
  */
-void dropobj (void);
+void dropobj (int);
 
 /* =============================================================================
  * FUNCTION: readscr
@@ -114,7 +114,7 @@ void dropobj (void);
  *
  *   None.
  */
-void readscr (void);
+void readscr (int);
 
 /* =============================================================================
  * FUNCTION: eatcookie
@@ -130,7 +130,7 @@ void readscr (void);
  *
  *   None.
  */
-void eatcookie (void);
+void eatcookie (int);
 
 /* =============================================================================
  * FUNCTION: quaff
@@ -146,7 +146,7 @@ void eatcookie (void);
  *
  *   None.
  */
-void quaff (void);
+void quaff (int);
 
 /* =============================================================================
  * FUNCTION: opendoor
@@ -164,7 +164,7 @@ void quaff (void);
  *
  *   None.
  */
-void opendoor(void);
+void opendoor(ActionType);
 
 /* =============================================================================
  * FUNCTION: closedoor
@@ -180,7 +180,7 @@ void opendoor(void);
  *
  *   None.
  */
-void closedoor(void);
+void closedoor(ActionType);
 
 /* =============================================================================
  * FUNCTION: openchest
@@ -212,7 +212,7 @@ void openchest(void);
  *
  *   None.
  */
-void quit (void);
+void quit (int);
 
 /* =============================================================================
  * FUNCTION: do_create
@@ -228,7 +228,7 @@ void quit (void);
  *
  *   None.
  */
-void do_create(void);
+void do_create(int, int, int);
 
 #endif
 

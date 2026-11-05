@@ -55,46 +55,6 @@ static int count;
  */
 
 /* =============================================================================
- * FUNCTION: t_setup
- *
- * DESCRIPTION:
- * Sets up for text display for the indicated number of lines.
- *
- * PARAMETERS:
- *
- *   count : The number of lines of text to be displayed.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-static void t_setup (int count)
-{
-  set_display(DISPLAY_TEXT);
-  ClearText();
-  MoveCursor(1, 1);
-}
-
-/* =============================================================================
- * FUNCTION: t_endup
- *
- * DESCRIPTION:
- * Restores normal display screen depending on t_setup()/
- *
- * PARAMETERS:
- *
- *   count : The number of lines of text displayed.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-static void t_endup (int count)
-{
-  set_display(DISPLAY_MAP);
-}
-
-/* =============================================================================
  * FUNCTION: seepage
  *
  * DESCRIPTION:
@@ -118,12 +78,10 @@ static void seepage(void)
   {
     lincount++;
     count = 0;
-    Printc('\n');
+
     if (lincount > 17)
     {
       lincount = 0;
-      more();
-      ClearText();
     }
   }
 }
@@ -176,10 +134,9 @@ void qshowstr(void)
 
   mobuls_used = (gtime/100)+1;
   mobuls_left = (TIMELIMIT/100) - mobuls_used;
-  Printf("\nElapsed time is %d.  You have %d mobul%s left.",
+  Printf("Elapsed time is %d.  You have %d mobul%s left.",
     mobuls_used, mobuls_left, plural(mobuls_left));
 
-  more();
   nosignal=0;
 }
 
@@ -199,9 +156,7 @@ void showstr(void)
     if (iven[i] != ONOTHING) number++;
   }
 
-  t_setup(number);
   qshowstr();
-  t_endup(number);
 }
 
 
@@ -245,8 +200,6 @@ void showwear(void)
     }
   }
 
-  t_setup(count);
-
   /* Display the wearable items in item index order */
   for (i = 22 ; i < 93 ; i++)
   {
@@ -277,10 +230,7 @@ void showwear(void)
     }
   }
 
-  more();
-
   nosignal = 0;
-  t_endup(count);
 }
 
 /* =============================================================================
@@ -331,8 +281,6 @@ void showwield(void)
     }
   }
 
-  t_setup(count);
-
   /* display the wieldable items in item order */
   for (i = 22 ; i < 93 ; i++)
   {
@@ -371,9 +319,7 @@ void showwield(void)
     }
   }
 
-  more();
   nosignal = 0;
-  t_endup(count);
 }
 
 /* =============================================================================
@@ -403,7 +349,6 @@ void showread (void)
     }
   }
 
-  t_setup(count);
 
 
   /* display the readable items in item order */
@@ -429,9 +374,7 @@ void showread (void)
     }
   }
 
-  more();
   nosignal = 0;
-  t_endup(count);
 }
 
 /* =============================================================================
@@ -461,7 +404,6 @@ void showeat (void)
     }
   }
 
-  t_setup(count);
 
   /* show the edible items in item order */
   for (i = 22 ; i < 84 ; i++)
@@ -485,9 +427,7 @@ void showeat (void)
     }
   }
 
-  more();
   nosignal=0;
-  t_endup(count);
 }
 
 /* =============================================================================
@@ -513,7 +453,6 @@ void showquaff (void)
         break;
     }
   }
-  t_setup(count);
 
   /* show the quaffable items in item order */
   for (i = 22 ; i < 84 ; i++)
@@ -536,9 +475,7 @@ void showquaff (void)
     }
   }
 
-  more();
   nosignal = 0;
-  t_endup(count);
 }
 
 /* =============================================================================
@@ -546,111 +483,79 @@ void showquaff (void)
  */
 void seemagic(int arg)
 {
-  int i,number;
-
-  count = 0;
-  lincount = 0;
-  nosignal = 1;
-
-  set_display(DISPLAY_TEXT);
+  int i;
+  int first;
 
   if (arg == 99)
   {
-    number = (SPELL_COUNT+2)/3 + 4; /* # lines needed to display */
-    ClearText();
-    MoveCursor(1, 1);
-    Print("Availible spells are:\n\n");
+    print_header("Available spells are:");
+    first = 1;
     for (i = 0 ; i < SPELL_COUNT ; i++)
     {
-      Printf("%s %-20s ", spelcode[i], spelname[i]);
-      seepage();
+      if (first)
+        first = 0;
+      else
+        print_header(", ");
+      print_header(spelname[i]);
     }
-    seepage();
-    more();
-
-    nosignal = 0;
-    draws(0, MAXX, 0, number);
     return;
   }
-  else if (arg == -1)
-  {
-    /* if display spells while casting one */
-    number = 0;
-    for (i=0; i < SPELL_COUNT ; i++)
-    {
-      if (spelknow[i]) number++;
-    }
 
-    number = (number+2)/3 + 4;  /* # lines needed to display */
-    ClearText();
-    MoveCursor(1, 1);
-  }
-  else
-  {
-    ClearText();
-  }
-
-  Print("The magic spells you have discovered to date are:\n\n");
+  print_header("The magic spells you have discovered to date are:");
+  first = 1;
   for (i = 0 ; i < SPELL_COUNT ; i++)
   {
     if (spelknow[i])
     {
-      Printf("%s %-20s ",spelcode[i],spelname[i]);
-      seepage();
+      if (first)
+        first = 0;
+      else
+        print_header(", ");
+      print_header(spelname[i]);
     }
   }
+  if (first)
+    print_header("none");
 
   if (arg == -1)
   {
-    seepage();
-    more();
-    nosignal = 0;
-    set_display(DISPLAY_MAP);
-
     return;
   }
 
-  lincount += 3;
-  if (count!=0)
-  {
-    count = 2;
-    seepage();
-  }
-
-  Print("\nThe magic scrolls you have found to date are:\n\n");
-  count = 0;
+  print_header("<br/>The magic scrolls you have found to date are:");
+  first = 1;
   for (i=0; i<MAXSCROLL; i++)
   {
-    if (scrollknown[i])
+    if (scrollknown[i] && scrollname[i][1] != ' ')
     {
-      Printf("%-26s",&scrollname[i][1]);
-      seepage();
+      if (first)
+        first = 0;
+      else
+        print_header(", ");
+      print_header(&scrollname[i][1]);
     }
   }
+  if (first)
+    print_header("none");
 
-  lincount += 3;
-  if (count != 0)
-  {
-    count = 2;
-    seepage();
-  }
-
-  Print("\nThe magic potions you have found to date are:\n\n");
-  count = 0;
+  print_header("<br/>The magic potions you have found to date are:");
+  first = 1;
   for (i=0; i<MAXPOTION; i++)
   {
-    if (potionknown[i])
+    if (potionknown[i] && potionname[i][1] != ' ')
     {
-      Printf("%-26s",&potionname[i][1]);
-      seepage();
+      if (first)
+        first = 0;
+      else
+        print_header(", ");
+      print_header(&potionname[i][1]);
     }
   }
-
-  if (lincount!=0) more();
-
-  nosignal = 0;
-  set_display(DISPLAY_MAP);
-
+  if (first)
+    print_header("none");
+  
+  set_callback("*");
+  add_option(-1, "Back", "");
 }
 
 /* =============================================================================
@@ -663,15 +568,15 @@ void show1 (int idx, char *str2[], int known[])
   {
     if (str2 == 0)
     {
-      Printf("\n%c)   %s", idx+'a', objectname[(int) iven[idx]]);
+      Printf(" %s", objectname[(int) iven[idx]]);
     }
     else if (*str2[ivenarg[idx]]==0)
     {
-      Printf("\n%c)   %s", idx+'a', objectname[(int) iven[idx]]);
+      Printf(" %s", objectname[(int) iven[idx]]);
     }
     else
     {
-    Printf("\n%c)   %s of%s", idx+'a', objectname[(int) iven[idx]], str2[ivenarg[idx]]);
+    Printf(" %s of%s", objectname[(int) iven[idx]], str2[ivenarg[idx]]);
     }
   }
   else
@@ -679,19 +584,19 @@ void show1 (int idx, char *str2[], int known[])
     /* scroll or potion or something with a known array */
     if (str2 == 0)
     {
-      Printf("\n%c)   %s",idx+'a',objectname[(int) iven[idx]]);
+      Printf(" %s",objectname[(int) iven[idx]]);
     }
     else if (*str2[ivenarg[idx]]==0)
     {
-      Printf("\n%c)   %s",idx+'a',objectname[(int) iven[idx]]);
+      Printf(" %s",objectname[(int) iven[idx]]);
     }
     else if (known[ivenarg[idx]]==0)
     {
-      Printf("\n%c)   %s",idx+'a',objectname[(int) iven[idx]]);
+      Printf(" %s",objectname[(int) iven[idx]]);
     }
     else
     {
-      Printf("\n%c)   %s of%s", idx+'a', objectname[(int) iven[idx]], str2[ivenarg[idx]]);
+      Printf(" %s of%s", objectname[(int) iven[idx]], str2[ivenarg[idx]]);
     }
   }
 
@@ -737,7 +642,7 @@ void show3 (int index)
       break;
 
     default:
-      Printf("\n%c)   %s", index+'a', objectname[(int) iven[index]]);
+      Printf(" %s", objectname[(int) iven[index]]);
       show_plusses(ivenarg[index]);
       break;
   }
@@ -753,3 +658,116 @@ void show3 (int index)
   }
 
 }
+
+char *get_inventory_name1(int idx, char *str2[], int known[])
+{
+	static char name[80];
+	/* standard */
+	if (known == 0)
+	{
+		if (str2 == 0)
+		{
+			strcpy(name, objectname[(int) iven[idx]]);
+		}
+		else if (*str2[ivenarg[idx]]==0)
+		{
+			strcpy(name, objectname[(int) iven[idx]]);
+		}
+		else
+		{
+			sprintf(name, "%s of%s", objectname[(int) iven[idx]], str2[ivenarg[idx]]);
+		}
+	}
+	else
+	{
+		/* scroll or potion or something with a known array */
+		if (str2 == 0)
+		{
+			strcpy(name, objectname[(int) iven[idx]]);
+		}
+		else if (*str2[ivenarg[idx]]==0)
+		{
+			strcpy(name, objectname[(int) iven[idx]]);
+		}
+		else if (known[ivenarg[idx]]==0)
+		{
+			strcpy(name, objectname[(int) iven[idx]]);
+		}
+		else
+		{
+			sprintf(name, "%s of%s", objectname[(int) iven[idx]], str2[ivenarg[idx]]);
+		}
+	}
+
+	if (wizard)
+	{
+		sprintf(name + strlen(name), " [ %d ]", ivenarg[idx]);
+	}
+
+	return name;
+}
+
+char *get_plusses(int plus)
+{
+	static char plusses[10];
+	if (plus > 0 || wizard)
+		sprintf(plusses, " +%d", plus);
+	else if (plus < 0)
+		sprintf(plusses, " %d", plus);
+	else
+		plusses[0] = 0;
+	return plusses;
+}
+
+char *get_inventory_name3(int index)
+{
+	static char name[80];
+	switch (iven[index])
+	{
+		case OPOTION:
+			strcpy(name, get_inventory_name1(index, potionname, potionknown));
+			break;
+
+		case OSCROLL:
+			strcpy(name, get_inventory_name1(index, scrollname, scrollknown));
+			break;
+
+		case OLARNEYE:
+		case OBOOK:
+		case OSPIRITSCARAB:
+		case ODIAMOND:
+		case ORUBY:
+		case OCUBEofUNDEAD:
+		case OEMERALD:
+		case OCHEST:
+		case OCOOKIE:
+		case OSAPPHIRE:
+		case OORB:
+		case OHANDofFEAR:
+		case OBRASSLAMP:
+		case OURN:
+		case OWWAND:
+		case OSPHTALISMAN:
+		case ONOTHEFT:
+			strcpy(name, get_inventory_name1(index, (char **)0, (int *)0));
+			break;
+
+		default:
+			strcpy(name, objectname[(int) iven[index]]);
+			strcat(name, get_plusses(ivenarg[index]));
+			break;
+	}
+
+	if (c[WIELD]==index)
+	{
+		strcat(name, " (weapon in hand)");
+	}
+
+	if ((c[WEAR]==index) || (c[SHIELD]==index))
+	{
+		strcat(name, " (being worn)");
+	}
+
+	return name;
+}
+

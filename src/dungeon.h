@@ -51,6 +51,7 @@
 #include <stdio.h>
 
 #include "monster.h"
+#include "MemoryFile.h"
 
 /* =============================================================================
  * Exported variables
@@ -463,7 +464,7 @@ int newobject(int lev, int *i);
  *   == 0 if successful
  *   != 0 if error
  */
-int write_levels(FILE *fp);
+int write_levels(MemoryFile *fp);
 
 /* =============================================================================
  * FUNCTION: read_levels
@@ -480,6 +481,6 @@ int write_levels(FILE *fp);
  *   == 0 if successful
  *   != 0 if error
  */
-int read_levels(FILE *fp);
+int read_levels(MemoryFile *fp);
 
 #endif

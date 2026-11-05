@@ -387,46 +387,13 @@ static void pick_char(int foo)
   int i;
   int j;
 
-  set_display(DISPLAY_TEXT);
-
   nosignal = 1; /* disable signals */
 
-  if (foo == 0)
-  {
-    ClearText();
-    MoveCursor(29, 1);
-    Standout("The Addiction of Ularn\n\n");
-    Print("Pick a character class...\n\n");
-
-    Print("\ta)  Ogre       - Exceptional strength, but thick as a brick\n");
-    Print("\n");
-    Print("\tb)  Wizard     - Smart, good at magic, but very weak\n");
-    Print("\n");
-    Print("\tc)  Klingon    - Strong and average IQ, but unwise & very ugly\n");
-    Print("\n");
-    Print("\td)  Elf        - OK at magic, but a mediocre fighter\n");
-    Print("\n");
-    Print("\te)  Rogue      - Nimble and smart, but only average strength\n");
-    Print("\n");
-    Print("\tf)  Adventurer - Jack of all trades, master of none\n");
-    Print("\n");
-    Print("\tg)  Dwarf      - Strong and healthy, but not good at magic\n");
-    Print("\n");
-    Print("\th)  Rambo      - A special challenge.\n");
-    Print("\t                 Bad at everything, but has a lance of death");
-
-    MoveCursor(1, 24);
-    i = get_prompt_input("So, what are ya? ", "abcdefgh", 1);
-
-  }
-  else
-  {
-    //
-    // Character selected in ops
-    //
-    i = foo;
-    c[SHIELD] = c[WEAR] = c[WIELD] = -1;
-  }
+  //
+  // Character selected in ops
+  //
+  i = foo;
+  c[SHIELD] = c[WEAR] = c[WIELD] = -1;
 
   i = i - 'a';
   class_num = i;
@@ -772,7 +739,7 @@ void raiseexperience (long x)
   {
     /* Alert the player to level up */
     UlarnBeep();
-    Printf("\nWelcome to level %d!",(long)c[LEVEL]);
+    Printf("Welcome to level %d!",(long)c[LEVEL]);
     /* if we changed levels */
 
     switch ((int)c[LEVEL])
@@ -797,7 +764,7 @@ void raiseexperience (long x)
         c[SPIRITPRO] = 99999L;
         break;
       case 100:
-        Print("\nYou are now The Creator!");
+        Print("You are now The Creator!");
         {
           int i,j;
 
@@ -837,7 +804,7 @@ void loseexperience (long x)
 
   if (i!=c[LEVEL])
   {
-    Printf("\nYou went down to level %d!",(long)c[LEVEL]);
+    Printf("You went down to level %d!",(long)c[LEVEL]);
   }
 
   recalc();
@@ -852,8 +819,8 @@ void losehp (DiedReasonType Reason, int x)
   if ((c[HP] -= x) <= 0)
   {
     UlarnBeep();
-    Print("\nAlas, you have died.\n");
-    Print("\n");
+    Print("Alas, you have died.");
+    Print("");
     nap(3000);
 
     if ((Reason == DIED_MONSTER) && (last_monst_id == MONST_NONE))
@@ -977,7 +944,7 @@ void positionplayer (void)
 
   if (closest == 10000)
   {
-    Print("Failure in positionplayer\n");
+    Print("Failure in positionplayer");
   }
   else
   {
@@ -1130,6 +1097,34 @@ void recalc (void)
 /* =============================================================================
  * FUNCTION: take
  */
+static void compact_inventory()
+{
+    for (int i = 0; i < IVENSIZE - 1; i++)
+    {
+        if (iven[i] != ONOTHING)
+            continue;
+            
+        int j = i + 1;
+        while (iven[j] == ONOTHING)
+        {
+            j++;
+            if (j == IVENSIZE)
+                return;
+        }
+            
+        iven[i] = iven[j];
+        ivenarg[i] = ivenarg[j];
+        iven[j] = ONOTHING;
+        
+        if (c[WIELD] == j)
+            c[WIELD] = i;
+        if (c[WEAR] == j)
+            c[WEAR] = i;
+        if (c[SHIELD] == j)
+            c[SHIELD] = i;
+    }
+}
+ 
 int take (int itm, int arg)
 {
   int i;
@@ -1137,6 +1132,8 @@ int take (int itm, int arg)
   int slot;
   int need_recalc;
   char eyeflag = 0;
+  
+  compact_inventory();
 
   /*
    * Decide how many items the player can carry
@@ -1227,7 +1224,7 @@ int take (int itm, int arg)
         break;
     }
 
-    Print("\nYou pick up:");
+    Print("You pick up:");
     show3(slot);
     if (need_recalc)
     {
@@ -1237,15 +1234,15 @@ int take (int itm, int arg)
 
     if ((c[BLINDCOUNT] == 0) && eyeflag)
     {
-      Print("\nYour sight fades for a moment...");
+      Print("Your sight fades for a moment...");
       nap(2000);
       drawscreen();
-      Print("\nYour sight returns, and everything looks crystal-clear!");
+      Print("Your sight returns, and everything looks crystal-clear!");
     }
     return(0);
   }
 
-  Print("\nYou can't carry anything else.");
+  Print("You can't carry anything else.");
   return(1);
 }
 
@@ -1263,7 +1260,7 @@ int drop_object (int k)
 
   if (itm == ONOTHING)
   {
-    Printf("\nYou don't have item %c! ", k+'a');
+    Printf("You don't have item %c! ", k+'a');
     return(1);
   }
 
@@ -1274,7 +1271,7 @@ int drop_object (int k)
   else if (item[playerx][playery] > ONOTHING)
   {
     UlarnBeep();
-    Print("\nThere's something here already.");
+    Print("There's something here already.");
     return(1);
   }
 
@@ -1290,7 +1287,7 @@ int drop_object (int k)
   }
 
   /* show what item you dropped*/
-  Print("\n  You drop:");
+  Print("You drop:");
   show3(k);
 
   /* Update the player's inventory and status */
@@ -1306,7 +1303,7 @@ int drop_object (int k)
 
   if (pitflag)
   {
-    Printf("\nIt disappears down the pit.");
+    Printf("It disappears down the pit.");
   }
 
   /* say dropped an item so wont ask to pick it up right away */
@@ -1418,7 +1415,7 @@ void enchantarmor (int how)
   if (c[WEAR] < 0 && c[SHIELD] < 0)
   {
     UlarnBeep();
-    Print("\nYou feel a sense of loss.");
+    Print("You feel a sense of loss.");
     return;
   }
 
@@ -1438,11 +1435,11 @@ void enchantarmor (int how)
   {
     if (how == ENCH_ALTAR)
     {
-      Printf("\nYour %s glows briefly.", objectname[(int) iven[c[which]]]);
+      Printf("Your %s glows briefly.", objectname[(int) iven[c[which]]]);
     }
     else if (rnd(10) <= 9)
     {
-      Printf("\nYour %s vibrates violently and crumbles into dust!",
+      Printf("Your %s vibrates violently and crumbles into dust!",
               objectname[(int) iven[c[which]]]);
 
       /* Recalculated any attributes affected by destroying the armour */
@@ -1459,7 +1456,7 @@ void enchantarmor (int how)
   }
   else
   {
-    Printf("\nYour %s glows for a moment.", objectname[(int) iven[c[which]]]);
+    Printf("Your %s glows for a moment.", objectname[(int) iven[c[which]]]);
     /* Increase enchantment level by 1 */
     adjustivenarg(c[which], 1);
   }
@@ -1478,7 +1475,7 @@ void enchweapon (int how)
   if (c[WIELD] < 0)
   {
     UlarnBeep();
-    Print("\nYou feel depressed.");
+    Print("You feel depressed.");
     return;
   }
 
@@ -1491,11 +1488,11 @@ void enchweapon (int how)
     {
       if (how == ENCH_ALTAR)
       {
-        Print("\nYour weapon glows a little.");
+        Print("Your weapon glows a little.");
       }
       else
       {
-        Print("\nYour weapon vibrates violently and crumbles into dust!");
+        Print("Your weapon vibrates violently and crumbles into dust!");
 
         /* Recalculate any attributes affected by destroying the weapon */
         adjustcvalues(iven[Idx], ivenarg[Idx]);
@@ -1511,7 +1508,7 @@ void enchweapon (int how)
     }
     else
     {
-      Print("\nYour weapon glows for a moment.");
+      Print("Your weapon glows for a moment.");
       adjustivenarg(Idx, 1);
     }
 
@@ -1718,10 +1715,10 @@ void adjustcvalues (int itm, int arg)
       c[EYEOFLARN] = 0;
       if (c[BLINDCOUNT] == 0)
       {
-        Print("\nYour sight fades for a moment...");
+        Print("Your sight fades for a moment...");
         nap(2000);
         drawscreen();
-        Print("\nYour sight returns but everything looks dull and faded.");
+        Print("Your sight returns but everything looks dull and faded.");
       }
       break;
     case OPOTION:
@@ -1965,12 +1962,12 @@ void regen(void)
             break;
 
           case BLINDCOUNT:
-            Print("\nThe blindness lifts.");
+            Print("The blindness lifts.");
             UlarnBeep();
             break;
 
           case CONFUSE:
-            Print("\nYou regain your senses.");
+            Print("You regain your senses.");
             UlarnBeep();
             break;
 
@@ -1990,7 +1987,7 @@ void regen(void)
             break;
 
           case HALFDAM:
-            Print("\nYou now feel better.");
+            Print("You now feel better.");
             UlarnBeep();
             break;
 
@@ -2005,12 +2002,12 @@ void regen(void)
             break;
 
           case ITCHING:
-            Print("\nThe irritation subsides.");
+            Print("The irritation subsides.");
             UlarnBeep();
             break;
 
           case CLUMSINESS:
-            Print("\nYou now feel less awkward.");
+            Print("You now feel less awkward.");
             UlarnBeep();
             break;
 
@@ -2056,7 +2053,7 @@ void regen(void)
       {
         c[WEAR] = -1;
         c[SHIELD]= -1;
-        Print("\nThe hysteria of itching forces you to remove your armor!");
+        Print("The hysteria of itching forces you to remove your armor!");
         UlarnBeep();
         recalc();
         flag |= 1;
@@ -2149,9 +2146,10 @@ void adjusttime(long tim)
 /* =============================================================================
  * FUNCTION: write_player
  */
-void write_player(FILE *fp)
+void write_player(MemoryFile *fp)
 {
   bwrite(fp, char_class, 20);
+  bwrite(fp, &sex, 1);
   bwrite(fp, &ramboflag, 1);
   bwrite(fp, &wizard, 1);
   bwrite(fp, &cheat, 1);
@@ -2171,9 +2169,10 @@ void write_player(FILE *fp)
 /* =============================================================================
  * FUNCTION: read_player
  */
-void read_player(FILE *fp)
+void read_player(MemoryFile *fp)
 {
   bread(fp, char_class, 20);
+  bread(fp, &sex, 1);
   bread(fp, &ramboflag, 1);
   bread(fp, &wizard, 1);
   bread(fp, &cheat, 1);
@@ -2204,5 +2203,38 @@ void read_player(FILE *fp)
     /* class got corrupt somehow, so reset to the first class */
     strcpy(char_class, InitialClassData[0].ClassName);
   }
+}
+
+void prompt_gender()
+{
+    print_header("What are ya?");
+    set_callback("pick_gender");
+    add_option(1, "Male", "");
+    add_option(0, "Female", "");
+}
+
+void prompt_character_class()
+{
+    print_header("Pick a character class...");
+    set_callback("ULarnSetup");
+    add_option('a', "Ogre", "Exceptional strength, but thick as a brick");
+    add_option('b', "Wizard", "Smart, good at magic, but very weak");
+    add_option('c', "Klingon", "Strong and average IQ, but unwise & very ugly");
+    add_option('d', "Elf", "OK at magic, but a mediocre fighter");
+    add_option('e', "Rogue", "Nimble and smart, but only average strength");
+    add_option('f', "Adventurer", "Jack of all trades, master of none");
+    add_option('g', "Dwarf", "Strong and healthy, but not good at magic");
+    add_option('h', "Rambo", "Bad at everything, but has a lance of death");
+}
+
+void pick_gender(int gender)
+{
+    sex = gender;
+    prompt_character_class();
+}
+
+int get_game_time()
+{
+    return gtime;
 }
 

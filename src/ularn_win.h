@@ -59,12 +59,6 @@
 
 #include "config.h"
 
-#ifdef WINDOWS
-
-#include <windows.h>
-
-#endif
-
 /*
  * Text formats
  */
@@ -197,39 +191,6 @@ typedef enum ActionType
 } ActionType;
 
 /* =============================================================================
- * FUNCTION: init_app
- *
- * DESCRIPTION:
- * Initialise the application and create the app windows
- *
- * PARAMETERS:
- *
- *    hinstance : The application instance.
- *
- * RETURN VALUE:
- *
- *   0 if init failed, or 1 if success.
- */
-
-#ifdef WINDOWS
-
-int init_app(HINSTANCE hinstance);
-
-#else
-
-#ifdef UNIX_X11
-
-int init_app(char *DisplayName);
-
-#else
-
-int init_app(void);
-
-#endif
-
-#endif
-
-/* =============================================================================
  * FUNCTION: close_app
  *
  * DESCRIPTION:
@@ -244,129 +205,6 @@ int init_app(void);
  *   None.
  */
 void close_app(void);
-
-/* =============================================================================
- * FUNCTION: get_normal_input
- *
- * DESCRIPTION:
- * Standard input handling routine.
- * Handles all windows events until a keydown or game action is received.
- * If a key was pressed then the ASCII code for the key press translated to
- * its corresponding actoin and the action is then returned.
- * For other action events (menu, toolbar, or whatever else I decide is useful
- * for activating game commands) the action corresponding to the event is
- * returned.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   The input action.
- */
-ActionType get_normal_input(void);
-
-/* =============================================================================
- * FUNCTION: get_prompt_input
- *
- * DESCRIPTION:
- * Input handling routine for prompting the player for input before the
- * game will continue.
- * This will display the indicated prompt in the message window, activate
- * a cursor and process events until a character in the answers string is
- * entered.
- *
- * PARAMETERS:
- *
- *   prompt     : The prompt to display
- *
- *   answers    : The acceptable answer characters
- *
- *   ShowCursor : Set to 1 to show a cursor, or 0 for no cursor
- *
- * RETURN VALUE:
- *
- *   The input character fromt he answers set.
- */
-char get_prompt_input(char *prompt, char *answers, int ShowCursor);
-
-/* =============================================================================
- * FUNCTION: get_password_input
- *
- * DESCRIPTION:
- * Input handling routine to input a password.
- * Echos '*' instead of the typed character
- *
- * PARAMETERS:
- *
- *   password : The buffer to store the input password.
- *
- *   Len      : The maximum length of the input password.
- *              Password should be at least (Len+1) characeters to allow
- *              for the null terminator.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void get_password_input(char *password, int Len);
-
-/* =============================================================================
- * FUNCTION: get_num_input
- *
- * DESCRIPTION:
- * Input handling routine to input a number.
- * Allows entry of '*' for returning the default value.
- *
- * PARAMETERS:
- *
- *   defval : The default value if no entry is input or '*' is entered.
- *
- * RETURN VALUE:
- *
- *   The input number.
- */
-int get_num_input(int defval);
-
-/* =============================================================================
- * FUNCTION: get_dir_input
- *
- * DESCRIPTION:
- * Input handling routine to input a direction key.
- *
- * PARAMETERS:
- *
- *   prompt     : The prompt to display
- *
- *   ShowCursor : Set to 1 to show a cursor, or 0 for no cursor.
- *
- * RETURN VALUE:
- *
- *   The move action associated with the input direction key.
- */
-ActionType get_dir_input(char *prompt, int ShowCursor);
-
-/* =============================================================================
- * FUNCTION: set_display
- *
- * DESCRIPTION:
- * Set the display mode for the main display area and redraw the screen
- * in the new display mode.
- * Display modes available are:
- *   DISPLAY_MAP,  - Displays the dungeon map
- *   DISPLAY_TEXT, - Displays paged text
- *
- * PARAMETERS:
- *
- *   Mode : The selected display mode.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void set_display(DisplayModeType Mode);
-
 
 /* =============================================================================
  * Status and effects display update functions
@@ -426,22 +264,6 @@ void UpdateStatusAndEffects(void);
  */
 
 /* =============================================================================
- * FUNCTION: ClearText
- *
- * DESCRIPTION:
- * Clear the currently active text display.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void ClearText(void);
-
-/* =============================================================================
  * FUNCTION: beep
  *
  * DESCRIPTION:
@@ -456,24 +278,6 @@ void ClearText(void);
  *   None.
  */
 void UlarnBeep(void);
-
-/* =============================================================================
- * FUNCTION: MoveCursor
- *
- * DESCRIPTION:
- * Locate the cursor at position x, y where 1, 1 is the top left corner.
- *
- * PARAMETERS:
- *
- *   x : The new x coordinate for the cursor
- *
- *   y : The new y coordinate for the cursor
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void MoveCursor(int x, int y);
 
 /* =============================================================================
  * FUNCTION: Printc
@@ -525,74 +329,6 @@ void Print(char *string);
  *   None.
  */
 void Printf(char *fmt, ...);
-
-/* =============================================================================
- * FUNCTION: Standout
- *
- * DESCRIPTION:
- * Display a string in the standout style.
- *
- * PARAMETERS:
- *
- *   string : The string to be printed
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void Standout(char *String);
-
-/* =============================================================================
- * FUNCTION: SetFormat
- *
- * DESCRIPTION:
- * Set the format for future text printing.
- *
- * PARAMETERS:
- *
- *   format : The new text format.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void SetFormat(FormatType format);
-
-/* =============================================================================
- * FUNCTION: ClearToEOL
- *
- * DESCRIPTION:
- * Clear from the current cursor position to the end of the current line.
- * The cursor position is unchanged.
- *
- * PARAMETERS:
- *
- *   None.
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void ClearToEOL(void);
-
-/* =============================================================================
- * FUNCTION:ClearToEOPage
- *
- * DESCRIPTION:
- * Clear from the specified cursor position to the end of the page.
- * The cursor position is unchanged.
- *
- * PARAMETERS:
- *
- *   x : The x cursor position for the start of the clear
- *
- *   y : The y cursor position for the start of the clear
- *
- * RETURN VALUE:
- *
- *   None.
- */
-void ClearToEOPage(int x, int y);
 
 /* =============================================================================
  * Map display functions
@@ -803,5 +539,13 @@ void nap(int delay);
  *   None.
  */
 void GetUser(char *username, int *uid);
+
+void set_input_type(char *type);
+void set_callback(char *function);
+char *get_callback();
+void add_option(int code, char *text, char *subtext);
+
+void print_header(char *string);
+void printf_header(char *format, ...);
 
 #endif
