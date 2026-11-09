@@ -19,6 +19,12 @@ See INSTALL for building, CHANGES.text for the version history, COPYRIGHT
 for licensing notes (not every module is GPL), and README.spoilers if you
 want hints.
 
+See HISTORY.md for where Ularn comes from (Noah Morgan's Larn, Phil
+Cordier's Ularn, Ularn 1.5 and Julian Olds' 1.6), taken from
+https://larn.org/history/history, and for a copyright note: this
+repository claims no copyright in the game, and Larn's original terms
+forbid making a profit from it, whatever the GPL notice says.
+
 
 ---- original readme below ----
 
